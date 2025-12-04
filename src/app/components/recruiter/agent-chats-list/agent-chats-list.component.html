@@ -1,0 +1,84 @@
+<div class="ml-2 mt-16">
+  <div
+    class="flex flex-col w-52 sm:w-80 h-fit shadow-md text-sm text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-700"
+    (click)="$event.stopPropagation()">
+
+    <!-- Lista de threads (solo visible si hay threads) -->
+    @if (chatThreads.length > 0) {
+      @for (thread of chatThreads; track thread.threadId; let last = $last) {
+        <div
+          [class]="'flex flex-row px-1 py-1 ' + (!last ? 'border-b border-gray-200 dark:border-gray-600' : '')"
+        >
+          <div
+            (click)="selectThread(thread.threadId)"
+            class="group overflow-hidden grow hover:bg-neutral-200 dark:hover:bg-neutral-600
+              flex flex-row p-2 cursor-pointer rounded-lg items-center"
+            [class]="(currentThreadId === thread.threadId ? 'bg-neutral-100 dark:bg-neutral-700' : '')"
+          >
+          <mat-icon>robot_2</mat-icon>
+          <div class="pl-3 truncate flex-1">{{ thread.name }}</div>
+          <button
+            class="hidden group-hover:flex items-center"
+            [class.flex]="currentThreadId === thread.threadId"
+            [class.hidden]="currentThreadId !== thread.threadId"
+            [matMenuTriggerFor]="threadMenu"
+            (click)="$event.stopPropagation()"
+          >
+            <mat-icon class="hover:scale-105 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-full text-neutral-800 dark:text-neutral-200">more_vert</mat-icon>
+          </button>
+
+          <!-- Menú de opciones para el thread -->
+          <mat-menu #threadMenu="matMenu"
+            class="!shadow-md !text-sm !text-neutral-700 dark:!text-neutral-200 !bg-white dark:!bg-neutral-900 !rounded-xl !border !border-gray-200 dark:!border-neutral-700">
+            <button mat-menu-item (click)="onRename(thread.threadId)"
+              class="!border !border-b   !border-neutral-400 !text-sm !text-neutral-850 dark:!text-white hover:!bg-neutral-100 dark:hover:!bg-neutral-700">
+              <mat-icon class="!text-neutral-850 dark:!text-white">edit</mat-icon>
+              <span>{{ 'agent.rename' | transloco }}</span>
+            </button>
+            <button mat-menu-item (click)="onDelete(thread.threadId)"
+              class="!border-b !border-gray-200 !text-sm !text-neutral-850 dark:!text-white hover:!bg-neutral-100 dark:hover:!bg-neutral-700">
+              <mat-icon class="!text-neutral-850 dark:!text-white">delete</mat-icon>
+              <span>{{ 'agent.delete' | transloco }}</span>
+            </button>
+          </mat-menu>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Mensaje MAX THREAD USE (solo visible cuando se alcanza el máximo) -->
+    @if (isMaxThreadsReached) {
+      <div
+        class="flex flex-row px-1 py-1"
+        [class.border-t]="chatThreads.length > 0"
+        [class]="chatThreads.length > 0 ? 'border-t border-gray-200 dark:border-gray-600' : ''"
+      >
+        <div
+          class="flex flex-row p-2 grow rounded-lg items-center bg-red-50 dark:bg-red-900/20"
+        >
+          <mat-icon class="text-red-500">warning</mat-icon>
+          <div class="pl-3 text-red-500 font-medium">MAX THREAD USE</div>
+        </div>
+      </div>
+    }
+
+    <!-- Botón ADD NEW CHAT -->
+    <div
+      class="flex flex-row px-1 py-1"
+      [class.border-t]="chatThreads.length > 0"
+      [class]="chatThreads.length > 0 ? 'border-t border-gray-200 dark:border-gray-600' : ''"
+    >
+      <div
+        (click)="onAddNewChat()"
+        [class]="'flex flex-row p-2 grow rounded-lg items-center ' +
+        (isMaxThreadsReached
+          ? 'cursor-not-allowed opacity-50 bg-gray-100 dark:bg-gray-800'
+          : 'cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700')"
+      >
+        <mat-icon>add_circle</mat-icon>
+        <div class="pl-3">{{ 'agent.add_new_chat' | transloco }}</div>
+      </div>
+    </div>
+
+  </div>
+</div>

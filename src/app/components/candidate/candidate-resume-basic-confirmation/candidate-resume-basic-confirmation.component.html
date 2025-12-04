@@ -1,0 +1,150 @@
+@if(resume){
+
+  <p class="text-center text-neutral-600 dark:text-neutral-400 mb-2 sm:mb-4 text-xl sm:text-2xl">
+      {{ "candidate_resume.confirm_basic_info" | transloco}}<br>
+  </p>
+<form [formGroup]="form" (ngSubmit)="saveResume($event)">
+<div class="flex flex-col bg-neutral-50 dark:bg-neutral-800 w-screen sm:w-[800px] p-6 rounded-lg shadow-xl border border-neutral-200 dark:border-neutral-700 mx-auto">
+
+
+  <div class="grid gap-y-4 sm:gap-y-8 gap-x-6 mb-6 sm:grid-cols-2">
+    <!-- Name -->
+      <div>
+        <label for="name" class="flex flex-row items-center mb-2 text-sm font-medium text-gray-900 dark:text-gray-200">
+          <mat-icon class="mr-2">person</mat-icon>
+            {{ "candidate_resume.fullname" | transloco}}:
+        </label>
+        <input type="text" id="name" formControlName="name" placeholder="{{ 'candidate_resume.fullname' | transloco}}"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+        <div class="messages absolute" [class.active]="nameField!.invalid">
+          @if (nameField!.hasError('required')){<div class="pl-2 pb-4 text-sm text-red-300">
+            {{ "resume_error.required_field" | transloco}}</div> }
+        </div>
+        <div class="messages absolute" [class.active]="nameField!.touched && nameField!.invalid">
+          @if (nameField!.hasError('minlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.minimum2" | transloco}}</div> }
+          @if (nameField!.hasError('maxlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.max60" | transloco}}</div> }
+        </div>
+      </div>
+
+
+      <!-- Email -->
+      <div>
+        <label for="email" class="flex flex-row items-center mb-2 text-sm font-medium text-gray-900 dark:text-gray-200">
+          <mat-icon class="mr-2">email</mat-icon>
+            {{ "candidate_resume.contact_email" | transloco}}:
+        </label>
+        <input type="email" id="email" formControlName="email"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          [ngClass]="{ '!border-2': emailField!.invalid }"
+          placeholder="{{ 'candidate_resume.email_placeholder' | transloco}}">
+        <div class="messages absolute" [class.active]="emailField!.invalid">
+          @if (emailField!.hasError('required')){<div class="pl-2 pb-4 text-sm text-red-300">
+            {{ "resume_error.required_field" | transloco}}</div> }
+        </div>
+        <div class="messages absolute" [class.active]="emailField!.touched && emailField!.invalid">
+          @if (emailField!.hasError('email')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.need_valid_email" | transloco}}</div> }
+          @if (emailField!.hasError('maxlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.max40" | transloco}}</div> }
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div>
+        <label for="phone" class="flex flex-row items-center mb-2 text-sm font-medium text-gray-900 dark:text-gray-200">
+          <mat-icon class="mr-2">phone</mat-icon>
+            {{ 'candidate_resume.phone_number' | transloco}}:
+        </label>
+        <input type="tel" id="phone" formControlName="phone"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          [ngClass]="{ '!border-2': phoneField!.invalid }"
+          placeholder="{{ 'candidate_resume.phone_number_placeholder' | transloco}}">
+        <div class="messages absolute" [class.active]="phoneField!.invalid">
+          @if (phoneField!.hasError('required')){<div class="pl-2 pb-4 text-sm text-red-300">
+            {{ "resume_error.required_field" | transloco}}</div> }
+        </div>
+        <div class="messages absolute" [class.active]="phoneField!.touched && phoneField!.invalid">
+          @if (phoneField!.hasError('minlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.min7_numbers" | transloco}}</div> }
+          @if (phoneField!.hasError('maxlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.max17" | transloco}}</div> }
+          @if (phoneField!.hasError('pattern')){<div class="pl-2 pb-4 pt-1 text-sm text-red-400">
+            {{ "resume_error.only_numbers" | transloco}}</div> }
+        </div>
+      </div>
+
+      <!-- City -->
+      <div>
+        <label for="city" class="flex flex-row items-center mb-2 text-sm font-medium text-gray-900 dark:text-gray-200">
+          <mat-icon class="mr-2">location_city</mat-icon>
+            {{ 'candidate_resume.city' | transloco}}:
+        </label>
+        <input type="text" id="city" formControlName="city"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+          [ngClass]="{ '!border-2': cityField!.invalid }"
+          placeholder="{{ 'candidate_resume.city_placeholder' | transloco}}">
+        <div class="messages absolute" [class.active]="cityField!.invalid">
+          @if (cityField!.hasError('required')){<div class="pl-2 pb-4 text-sm text-red-300">
+            {{ "resume_error.required_field" | transloco}}</div> }
+        </div>
+        <div class="messages absolute" [class.active]="cityField!.touched && cityField!.invalid">
+          @if (cityField!.hasError('minlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.minimum3" | transloco}}</div> }
+          @if (cityField!.hasError('maxlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.max40" | transloco}}</div> }
+        </div>
+      </div>
+
+
+      <!-- Zip Code -->
+      <div>
+        <label for="zipcode" class="flex flex-row items-center mb-2 text-sm font-medium text-gray-900 dark:text-gray-200">
+          <mat-icon class="mr-2">location_on</mat-icon>
+            {{ 'candidate_resume.zipcode' | transloco}}:
+        </label>
+        <input type="text" id="zipcode" formControlName="zipcode"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          [ngClass]="{ '!border-2': zipcodeField!.invalid }"
+          placeholder="{{ 'candidate_resume.zipcode_placeholder' | transloco}}">
+        <div class="messages absolute" [class.active]="zipcodeField!.invalid">
+          @if (zipcodeField!.hasError('required')){<div class="pl-2 pb-4 text-sm text-red-300">
+            {{ "resume_error.required_field" | transloco}}</div> }
+        </div>
+        <div class="messages absolute" [class.active]="zipcodeField!.touched && zipcodeField!.invalid">
+          @if (zipcodeField!.hasError('minlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.minimum4" | transloco}}</div> }
+          @if (zipcodeField!.hasError('maxlength')){<div class="pl-2 pb-4 text-sm text-red-400">
+            {{ "resume_error.max10" | transloco}}</div> }
+        </div>
+      </div>
+
+    </div>
+
+
+
+</div>
+
+<div class="flex items-center justify-center mt-0 sm:mt-6 text-lg font-semibold">
+  <button [disabled]="form.invalid" [class.buttonDisabled]="form.invalid"
+    type="submit"
+    class="flex flex-row items-center mt-4 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700
+          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-offset-neutral-800"
+  >
+      {{ "candidate_resume.save_confirm" | transloco}}
+  </button>
+</div>
+
+
+            <!-- <button type="submit"
+                    class="w-full flex mt-4 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm
+                            text-base font-medium text-white bg-blue-600 hover:bg-blue-700
+                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                            dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-offset-neutral-800">
+                {{ "candidate_profile.login" | transloco}}
+            </button> -->
+
+</form>
+
+}

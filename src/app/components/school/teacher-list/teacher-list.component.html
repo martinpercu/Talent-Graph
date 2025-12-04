@@ -1,0 +1,50 @@
+<div class="max-w-4xl mx-auto bg-white dark:bg-neutral-800 rounded-lg shadow-lg mb-2 p-6 border border-neutral-200 dark:border-neutral-700">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center space-x-2">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">smart_toy</mat-icon>
+      <h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ teacher.name }}</h2>
+    </div>
+    <!-- <span class="text-sm text-neutral-500 dark:text-neutral-400">{{ teacher.defaultTitle }}</span> -->
+  </div>
+
+  <!-- Details Section -->
+  <div class="grid grid-cols-2 gap-4">
+    <!-- Name (Redundant) -->
+    <!-- <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">smart_toy</mat-icon>
+      <div>
+        <div class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Name</div>
+        <div class="text-base text-neutral-600 dark:text-neutral-400">{{ teacher.name }}</div>
+      </div>
+    </div> -->
+
+    <!-- Default Title -->
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">topic</mat-icon>
+      <div>
+        <div class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Subject</div>
+        <div class="text-base text-neutral-600 dark:text-neutral-400">{{ teacher.defaultTitle }}</div>
+      </div>
+    </div>
+
+    <!-- Document Path -->
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">book_5</mat-icon>
+      <div>
+        <!-- <div class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Document:</div> -->
+        <!-- <div class="text-base text-neutral-600 dark:text-neutral-400">
+          <div (click)="toPdf()" class="cursor-pointer text-blue-500 hover:underline">{{ teacher.doc_path }}</div>
+        </div> -->
+        <div (click)="toPdf()" class="flex flex-row cursor-pointer items-center align-middle rounded-lg border border-neutral-200 dark:border-neutral-700 p-2 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+          <div class="mr-1">
+            Documents
+          </div>
+          <div>
+              <mat-icon class="text-neutral-600 dark:text-neutral-300 items-center align-middle">expand_circle_right</mat-icon>
+
+          </div>
+      </div>
+    </div>
+  </div>
+</div>

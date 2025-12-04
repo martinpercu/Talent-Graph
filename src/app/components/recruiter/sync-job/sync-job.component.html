@@ -1,0 +1,85 @@
+<div class="max-w-6xl mx-auto p-6 space-y-6">
+
+  <!-- Header -->
+  <!-- <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Job Synchronization</h1>
+    <p class="text-gray-600">Manage job postings synchronization with the AI Agent database</p>
+  </div> -->
+
+  <!-- Main Sync Section -->
+  <div class="bg-white rounded-lg shadow-md p-8">
+    <div class="flex items-center mb-6">
+      <mat-icon class="text-green-600 mr-3">work_outline</mat-icon>
+      <h2 class="text-2xl font-semibold text-gray-800">AI Agent Synchronization</h2>
+    </div>
+
+    <p class="text-gray-600 mb-6">
+      Synchronize job positions with the AI Agent for intelligent candidate matching
+    </p>
+
+    <!-- Action Buttons Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <!-- Sync All Button -->
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="syncAllJobsToAgent()"
+        [disabled]="syncing"
+        class="h-24 flex flex-col items-center justify-center space-y-2">
+
+        @if (syncing) {
+          <span class="text-sm">Syncing...</span>
+        } @else {
+          <mat-icon>cloud_upload</mat-icon>
+          <span class="text-sm font-medium">Sync All Jobs</span>
+        }
+      </button>
+
+      <!-- Sync One Button -->
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="syncOneJobToAgent()"
+        [disabled]="syncing"
+        class="h-24 flex flex-col items-center justify-center space-y-2 bg-blue-500 hover:bg-blue-600">
+
+        @if (syncing) {
+          <span class="text-sm">Syncing...</span>
+        } @else {
+          <mat-icon>upload_file</mat-icon>
+          <span class="text-sm font-medium">Sync Single Job</span>
+        }
+      </button>
+
+      <!-- Delete Button -->
+      <button
+        mat-raised-button
+        color="warn"
+        (click)="syncDeleteOneJobToAgent()"
+        class="h-24 flex flex-col items-center justify-center space-y-2">
+
+        <mat-icon>delete_forever</mat-icon>
+        <span class="text-sm font-medium">Delete Job</span>
+      </button>
+
+    </div>
+
+    <!-- Info Box -->
+    <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+      <div class="flex items-start">
+        <mat-icon class="text-green-600 mr-2 mt-0.5">info</mat-icon>
+        <div class="text-sm text-green-800">
+          <p class="font-medium mb-1">About synchronization:</p>
+          <ul class="list-disc list-inside space-y-1 text-green-700">
+            <li><strong>Sync All:</strong> Sends all job postings to the AI Agent for candidate matching</li>
+            <li><strong>Sync Single:</strong> Test synchronization with one specific job (ID: Ca5dUqEuky5dGqQmyJJr)</li>
+            <li><strong>Delete:</strong> Removes a job from the AI Agent database</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

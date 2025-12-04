@@ -1,0 +1,134 @@
+<div class="max-w-md mx-auto w-full px-2 py-4 text-center flex flex-col m-auto">
+
+    <!-- Formulario de Iniciar Sesión -->
+    <div id="login-form" class="text-center w-full sm:w-4/5 m-auto flex flex-col">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+        <div>
+          <!-- <label
+            for="email-login"
+            class="block text-left text-sm font-medium text-neutral-700 dark:text-neutral-300"
+            >{{ "candidate_profile.firstname" | transloco}}:</label
+          > -->
+          <input
+            type="text"
+            id="username"
+            name="username"
+            formControlName="username"
+            class="mt-1 block w-full text-base px-4 py-2 border border-neutral-300 rounded-md shadow-sm
+                  focus:outline-none focus:ring-blue-500 focus:border-blue-500
+                  bg-neutral-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
+            placeholder="{{ 'candidate_profile.firstname' | transloco}}"
+          />
+        </div>
+        <div>
+          <!-- <label
+            for="email-login"
+            class="block text-left text-sm font-medium text-neutral-700 dark:text-neutral-300"
+            >{{ "candidate_profile.email" | transloco}}:</label
+          > -->
+          <input
+            type="email"
+            id="email-login"
+            name="email-login"
+            formControlName="email"
+            class="mt-1 block w-full text-base px-4 py-2 border border-neutral-300 rounded-md shadow-sm
+                  focus:outline-none focus:ring-blue-500 focus:border-blue-500
+                  bg-neutral-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
+            placeholder="{{ 'candidate_profile.email' | transloco}}"
+          />
+        </div>
+        <div>
+          <!-- <label
+            for="password-login"
+            class="block text-left text-sm font-medium text-neutral-700 dark:text-neutral-300"
+            >{{ "candidate_profile.password" | transloco}}:</label
+          > -->
+          <input
+            type="password"
+            id="password-login"
+            name="password-login"
+            formControlName="password"
+            class="mt-1 block w-full text-base px-4 py-2 border border-neutral-300 rounded-md shadow-sm
+                  focus:outline-none focus:ring-blue-500 focus:border-blue-500
+                  bg-neutral-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
+            placeholder="••••••••"
+          />
+        </div>
+
+        @if(errorMessageEmailAlreadyUsed) {
+        <div class="flex flex-col text-red-600">
+          {{ "auth.error_already_use" | transloco}}<br>
+          {{ "auth.go_login" | transloco}}
+        </div>
+        }
+        @if(errorMessage) {
+        <div class="flex flex-col text-red-600">
+          {{ errorMessage }}
+        </div>
+        }
+        <div class="text-xs text-center ml-2">
+          {{ "auth.continuing" | transloco }}
+          <span class="hover:underline cursor-pointer" (click)="toTerms()">{{ "auth.terms_coditions" | transloco }}</span>{{ "auth.and_our" | transloco }}
+          <span class="hover:underline cursor-pointer" (click)="toPrivacy()">{{ "auth.privacy" | transloco }}</span>
+        </div>
+
+        <button
+          type="submit"
+          class=" py-2 px-8 mt-2 text-base bg-black dark:bg-white text-white dark:text-black rounded-lg">
+          {{ "candidate_profile.register" | transloco}}
+        </button>
+        <!-- <p class="text-center text-sm">
+                        <a href="#" class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">¿Olvidaste tu contraseña?</a>
+                    </p> -->
+      </form>
+    </div>
+
+</div>
+
+    <!-- Botón para alternar entre Login y Register -->
+    <!-- <div class="text-center pt-4">
+      <button
+        id="toggle-auth-mode"
+        class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm focus:outline-none"
+      >
+        ¿No tienes cuenta? Crea una.
+      </button>
+    </div> -->
+
+
+  <!-- <div class="flex flex-col gap-1">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div>
+        <input
+          class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-md mb-2 focus:border-neutral-400 w-full px-2.5 py-1 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400"
+          type="text"
+          placeholder="Username"
+          formControlName="username"
+        />
+      </div>
+      <div>
+        <input
+          class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-md mb-2 focus:border-neutral-400 w-full px-2.5 py-1 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400"
+          type="text"
+          placeholder="Email"
+          formControlName="email"
+        />
+      </div>
+      <div>
+        <input
+          class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-md mb-2 focus:border-neutral-400 w-full px-2.5 py-1 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400"
+          type="password"
+          placeholder="Password"
+          formControlName="password"
+        />
+      </div>
+      <div>
+        <button
+          class="m-2 py-1 px-4 bg-black dark:bg-white text-white dark:text-black rounded-full"
+          type="submit"
+        >
+          Sign Up
+        </button>
+      </div>
+    </form>
+  </div> -->

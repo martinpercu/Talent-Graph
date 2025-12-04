@@ -1,0 +1,37 @@
+<!-- <p>teacher-main-page works!</p>
+
+<app-login></app-login>
+<app-logout></app-logout>
+<app-register></app-register> -->
+
+@if(this.visualStatesService.showModalInfo() == true) {
+    <app-modalhowitworks></app-modalhowitworks>
+  }
+
+<div class="flex flex-row">
+
+  <div class="flex md:hidden flex-row absolute z-20 w-screen h-screen"
+  [ngClass]="{'font-bold hidden': this.visualStatesService.leftMenuCondition() === false}">
+    <div class="flex" >
+      <app-left-menu></app-left-menu>
+    </div>
+    <div class="grow " (click)="toggleShowLeftMenuHeader()">
+    </div>
+  </div>
+
+  <div class="hidden md:flex">
+    <div [ngClass]="{'md:hidden': this.visualStatesService.leftMenuCondition() === true}">
+      <app-left-menu></app-left-menu>
+    </div>
+  </div>
+
+  <div class="grow">
+    <app-chat></app-chat>
+  </div>
+
+</div>
+
+<!--
+@if(this.authService.currentUserSig()) {
+  <div class="w-9 h-9 bg-red-500"></div>
+} -->

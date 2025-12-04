@@ -1,0 +1,24 @@
+<p>schools-list works!</p>
+<div class="schools-list ml-8 mt-8">
+  <h2 class="text-2xl font-bold mb-4">Cursos Disponibles</h2>
+  @if (school$ | async; as school) {
+    <h3 class="text-xl font-semibold mb-4">{{ school.name }}</h3>
+    <ul class="space-y-2">
+      @for (course of courses$ | async; track course.id) {
+        <li class="border p-4 rounded-md">
+          <h4 class="font-medium">{{ course.name }}</h4>
+          <p>Estado: {{ course.enabled ? 'Habilitado' : 'Deshabilitado' }}</p>
+          <p>Disponible: {{ course.startDate }} - {{ course.endDate }}</p>
+          @if (course.description) {
+            <p>Descripción: {{ course.description }}</p>
+          }
+        </li>
+      }
+      @if (!(courses$ | async)?.length) {
+        <li>No hay cursos asignados a esta escuela.</li>
+      }
+    </ul>
+  } @else {
+    <p class="text-red-500">No se pudo cargar la escuela.</p>
+  }
+</div>

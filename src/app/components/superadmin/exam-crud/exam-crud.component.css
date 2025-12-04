@@ -1,0 +1,13 @@
+/* Ajustes para formularios y botones */
+input, select {
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+button mat-icon {
+  vertical-align: middle;
+}

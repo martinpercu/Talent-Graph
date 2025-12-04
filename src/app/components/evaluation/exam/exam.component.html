@@ -1,0 +1,438 @@
+@if(exam) {
+<div class="max-w-6xl mx-auto bg-white dark:bg-neutral-900">
+
+  @if (examViewMode === 'introInfoExam') {
+  <div class="m-auto flex flex-col sm:flex-row sm:items-center justify-center items-center min-h-screen">
+
+    <div class="flex flex-col dark:text-neutral-200 p-6 sm:p-10 sm:w-1/2 gap-4 mb-8 sm:mb-0 ">
+      <div class="flex text-2xl font-semibold">
+        {{ exam.title }}
+      </div>
+      <div class="flex text-sm sm:text-base">
+        You're about to validate everything you've learned. To get certified, you can take the exam as many times as
+        you want.
+      </div>
+      <div class="flex">
+        <div (click)="startExam()"
+          class="flex flex-row items-center align-middle p-2 sm:p-3 sm:gap-2 text-sm font-semibold bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">
+          <div class="flex">START EXAM</div>
+          <mat-icon class="">arrow_forward</mat-icon>
+        </div>
+        <!-- <div class="flex flex-row items-center align-middle gap-1">
+          <div class="flex">{{ footerButtonText }}</div>
+          <mat-icon class="flex">arrow_forward</mat-icon>
+        </div> -->
+        <!-- <div (click)="changeViewTo('results')">PASAR A RESULT</div> -->
+      </div>
+    </div>
+
+    <div
+      class="bg-white flex flex-col sm:w-1/2 mx-4 sm:mx-8 p-4 sm:p-6  dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700">
+      <!-- Header -->
+
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2 mb-4">
+          <!-- <mat-icon class="text-neutral-600 dark:text-neutral-300">quiz</mat-icon> -->
+          <h2 class="text-sm sm:text-lg font-semibold text-neutral-800 dark:text-neutral-200">
+            Taking the exam:
+          </h2>
+        </div>
+      </div>
+
+      <!-- Details Section -->
+      <div class="grid grid-cols-1 gap-4">
+
+        <!-- Default Title -->
+        <div class="flex text-neutral-600 dark:text-neutral-300 items-center space-x-2">
+          <mat-icon>check_indeterminate_small</mat-icon>
+          <div class="text-sm sm:text-base">You can take the exam as many times
+            as you
+            want.</div>
+        </div>
+        <!-- Default Title -->
+        <div class="flex text-neutral-600 dark:text-neutral-300 items-center space-x-2">
+          <mat-icon>check_indeterminate_small</mat-icon>
+          <div class="text-sm sm:text-base">The exam consists of {{
+            exam.questions.length
+            }} questions.</div>
+        </div>
+        <!-- Default Title -->
+        <div class="flex text-neutral-600 dark:text-neutral-300 items-center space-x-2">
+          <mat-icon>check_indeterminate_small</mat-icon>
+          <div class="text-sm sm:text-base">You have {{ exam.timeToDoTheExam }}
+            minutes to
+            complete it.</div>
+        </div>
+        <!-- Default Title -->
+        <div class="flex text-neutral-600 dark:text-neutral-300 items-center space-x-2">
+          <mat-icon>check_indeterminate_small</mat-icon>
+          <div class="text-sm sm:text-base">You need {{ exam.passingPercentage
+            }}% of
+            correct answers to pass.</div>
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+  </div>
+  }
+  @else {
+
+  <div class="p-6 overflow-y-auto h-[calc(100vh-73px)]"
+    [ngClass]="{ 'h-full': examViewMode === 'results' }">
+
+    @if (examViewMode === 'loading') {
+    <div class="text-center py-10">
+      <p class="text-xl text-neutral-600 dark:text-neutral-300">Cargando examen...</p>
+
+      <div class="text-center">
+        @if (timeRemaining > 0) {
+        <p class="text-lg text-neutral-800 dark:text-neutral-200 mb-4">
+          Tiempo restante: {{ timeRemaining | number:'1.0-0' }} minutos
+        </p>
+        } @else {
+        <button (click)="reloadPage()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+          Try Again
+        </button>
+        }
+      </div>
+
+
+    </div>
+    }
+    @else if (examViewMode === 'taking_question' || examViewMode === 'editing_question_from_summary') {
+    @if (exam && preparedQuestions.length > 0 && preparedQuestions[currentQuestionIndex]) {
+    <div>
+
+      <div class="flex flex-row items-center">
+        <div class="flex text-sm sm:text-base text-neutral-800 dark:text-neutral-200">{{ exam.title }}</div>
+        <div class="grow"></div>
+        <div class="flex text-sm sm:text-base text-neutral-500 dark:text-neutral-400">{{ currentQuestionIndex + 1 }} /
+          {{
+          preparedQuestions.length }}</div>
+      </div>
+
+      <div class="h-1 bg-red-200 mb-8 "></div>
+
+      @defer (on viewport) {
+      <div class="flex flex-col gap-4 sm:gap-12 sm:flex-row justify-center items-center min-h-[70vh]">
+
+        <div class="flex text-lg sm:text-2xl sm:w-1/2 font-medium text-neutral-800 dark:text-neutral-200 mb-4">{{
+          preparedQuestions[currentQuestionIndex].question.text }}
+        </div>
+
+        <div class="flex flex-col sm:w-1/2 w-full">
+          <div class="text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 mb-2">Choose the correct answer</div>
+          <div class="space-y-3">
+            @for (option of preparedQuestions[currentQuestionIndex].options; track option.text) {
+            <button type="button" (click)="selectAnswer(currentQuestionIndex, option.text)"
+              class="w-full text-left text-sm p-3 border rounded-lg transition-colors duration-150 ease-in-out"
+              [ngClass]="{
+            'bg-neutral-500 text-white font-normal dark:bg-neutral-500 dark:text-white shadow-xl': userAnswers[currentQuestionIndex] === option.text,
+            'bg-white dark:bg-neutral-800 font-normal text-neutral-700 dark:text-neutral-300': userAnswers[currentQuestionIndex] !== option.text
+            }">
+              {{ option.text }}
+            </button>
+            }
+          </div>
+        </div>
+
+      </div>
+      } @placeholder {
+      <p>Loading question...</p>
+      }
+    </div>
+    } @else {
+    <p class="text-center text-red-500 dark:text-red-400">Unabled to load the question.</p>
+    }
+    }
+    @else if (examViewMode === 'summary') {
+
+    <div>
+
+
+      <div class="flex flex-row items-center">
+        <div class="flex text-sm sm:text-base text-neutral-800 dark:text-neutral-200">{{ exam.title }}</div>
+        <div class="grow"></div>
+        <!-- <div class="flex text-sm sm:text-base text-neutral-500 dark:text-neutral-400">{{ currentQuestionIndex + 1 }} /
+          {{
+          preparedQuestions.length }}</div> -->
+      </div>
+      <div class="h-1 bg-red-200 mb-8 "></div>
+
+
+
+      <div class="text-xl font-bold text-neutral-800 dark:text-neutral-200 mt-4 mb-4">Answer Summary</div>
+      <div class="text-sm text-neutral-800 dark:text-neutral-200 mb-6">
+        You can review and change your answers. When you have finished, click on 'Grade Answers' to submit the questions
+        and view your score.
+      </div>
+      @if (exam && preparedQuestions.length > 0) {
+      @for (pq of preparedQuestions; track pq.question.text; let i = $index) {
+      <div class="mb-8">
+        <div class="font-base text-neutral-700 dark:text-neutral-300 mb-2">
+          {{ i + 1 }}. {{ pq.question.text }}
+        </div>
+
+        <div
+          class="flex flex-row bg-neutral-50 dark:bg-neutral-850 items-center align-middle p-3 mb-4 border rounded-lg dark:border-neutral-700">
+          <div class="flex text-base" [ngClass]="{
+                   'text-neutral-800 dark:text-neutral-200': userAnswers[i],
+                   'text-red-500 dark:text-red-400': !userAnswers[i]
+                 }">
+            <span class="ml-2">{{ userAnswers[i] || 'Not Aswered' }}</span>
+          </div>
+          <div class="grow"></div>
+          <button (click)="editQuestionFromSummary(i)"
+            class="flex flex-row text-sm px-2 items-center align-middle font-semibold  text-neutral-700 dark:text-neutral-200 rounded-lg cursor-pointer border border-neutral-350 shadow-md">
+            Change
+          </button>
+        </div>
+
+      </div>
+      }
+      } @else {
+      <p>No questions to show in this summary.</p>
+      }
+    </div>
+    }
+    @else if (examViewMode === 'results') {
+
+    <div class="flex flex-row items-center">
+      <div class="flex text-sm sm:text-base text-neutral-800 dark:text-neutral-200">{{ exam.title }}</div>
+      <div class="grow"></div>
+      <!-- <div class="flex text-sm sm:text-base text-neutral-500 dark:text-neutral-400">{{ currentQuestionIndex + 1 }} /
+          {{
+          preparedQuestions.length }}</div> -->
+    </div>
+    <div class="h-1 bg-red-200 mb-8 "></div>
+
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+      <div class="flex flex-col sm:w-1/2">
+        <div class="flex text-xl font-semibold mb-4" [ngClass]="{
+              'text-green-600 dark:text-green-400': lastExamPassed,
+              'text-neutral-700 dark:text-neutral-300': !lastExamPassed
+            }">
+          {{ lastExamPassed ? 'Exam Passed!' : 'Don\'t give up' }}
+        </div>
+        <!-- <div class="flex text-neutral-700 dark:text-neutral-300 mb-2">
+          @if(exam) {You need a minimum score of 9.0 to pass
+          You need a minimum score of {{ exam.passingPercentage }}% of correct answers to pass.
+          }
+        </div> -->
+        <div class="flex text-neutral-700 dark:text-neutral-300 mb-2">
+          @if(exam) {
+          <!-- You need a minimum score of {{ (exam.questions.length * exam.passingPercentage) / 100 | number:'1.0-2' }} to pass. -->
+           @if(lastExamPassed){
+            Congratulation you passed the exam.
+           }
+           @else {
+            You need a minimum score of {{ ceilNumber((exam.questions.length * exam.passingPercentage) / 100) }} to pass.
+           }
+          }
+        </div>
+      </div>
+      <div
+        class="flex flex-row sm:w-1/2 bg-white mx-4 sm:mx-8 p-4 sm:p-6  dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 justify-center items-center">
+
+        <div class="flex flex-col m-auto text-neutral-700 dark:text-neutral-300 justify-center items-center">
+          <!-- <div class="text-neutral-900 dark:text-white">
+            {{ (lastSubmittedResult.correctAnswers / lastSubmittedResult.totalQuestions * 100) | number:'1.0-0' }}%
+          </div> -->
+          <div class="text-2xl sm:text-4xl font-semibold text-neutral-900 dark:text-white">
+            {{ (lastSubmittedResult.correctAnswers / lastSubmittedResult.totalQuestions) * 10 | number:'1.0-2' }}
+          </div>
+          <div class="text-sm">Score</div>
+        </div>
+        <div class="h-14 sm:h-18 w-0.5 bg-neutral-500"></div>
+        <div class="flex flex-col m-auto text-neutral-700 dark:text-neutral-300 justify-center items-center">
+          <div class="text-2xl sm:text-4xl font-semibold">
+            <span class="text-neutral-900 dark:text-white">{{ lastSubmittedResult.correctAnswers}} </span>/ {{
+            lastSubmittedResult.totalQuestions }}
+          </div>
+          <div class="text-sm">Correct</div>
+        </div>
+
+      </div>
+
+    </div>
+    <div>
+      <!-- <h3 class="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Detalle de tus respuestas:</h3> -->
+      @for (qa of lastSubmittedResult.questions; track qa.question; let i = $index) {
+      <div class="font-medium text-neutral-700 dark:text-neutral-300">{{ i + 1 }}. {{ qa.question }}</div>
+      <div class="mb-3 p-3 border rounded-lg" [ngClass]="{
+                 'border-green-500 dark:border-green-700': qa.correct,
+                 'border-red-500 dark:border-red-700': !qa.correct
+               }">
+        <!-- <p class="font-medium text-neutral-700 dark:text-neutral-300">{{ qa.question }}</p> -->
+        <!-- <p class="text-sm mt-1"
+          [ngClass]="{'text-green-700 dark:text-green-400': qa.correct, 'text-red-700 dark:text-red-400': !qa.correct}"> -->
+        <p class="text-sm text-neutral-800 dark:text-neutral-200">
+          <span class="ml-2"> {{ qa.answer || 'Not Aswered' }}</span>
+          <!-- @if (!qa.correct) {
+                <span class="block mt-1">Respuesta correcta: {{ getCorrectOptionText(qa) }}</span>
+              } -->
+        </p>
+      </div>
+      }
+      <button (click)="navigateToTeacherPage()"
+        class="px-4 py-2 flex flex-row items-center align-middle p-2 sm:p-3 gap-1 text-sm font-semibold  text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">
+        Return to Teacher
+      </button>
+    </div>
+
+    }
+    @else {
+    <div class="text-center">
+      @if (timeRemaining > 0) {
+      <p class="text-lg text-neutral-800 dark:text-neutral-200 mb-4">
+        Tiempo restante para reintentar: {{ timeRemaining | number:'1.0-0' }} minutos
+      </p>
+      } @else if (examViewMode !== 'introInfoExam') {
+      <button (click)="reloadPage()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+        Reintentar examen
+      </button>
+      }
+    </div>
+    }
+  </div>
+
+
+  }
+
+  @if (examViewMode !== 'loading' && examViewMode !== 'results' && isOkToDoTheExam) {
+  <footer
+    class="fixed bottom-0 left-0 right-0 bg-neutral-50 dark:bg-neutral-900 border-t dark:border-neutral-700 p-4 shadow-md z-50">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div>
+        @if (examTotalDurationMinutes > 0) {
+        <div class="text-sm font-medium tabular-nums" [ngClass]="{
+                 'text-red-600 dark:text-red-400 font-bold': isExamTimeCritical,
+                 'text-neutral-700 dark:text-neutral-300 font-normal': !isExamTimeCritical
+               }">
+
+          <div class="flex flex-row items-center align-middle gap-2">
+            <mat-icon class="flex">timer</mat-icon>
+            <div class="flex">{{ formatTimeRemaining() }}</div>
+          </div>
+        </div>
+        }
+      </div>
+      <div>
+        @if (footerButtonAction) {
+        <button (click)="footerButtonAction()" [disabled]="isFooterButtonDisabled" class="px-4 py-2 flex flex-row items-center align-middle p-2 sm:p-3 gap-1 text-sm font-semibold  text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md transition-colors
+                           bg-neutral-150 dark:bg-neutral-700 hover:bg-neutral-50 hover:dark:bg-neutral-800
+                           disabled:bg-neutral-400 dark:disabled:bg-neutral-600 disabled:cursor-not-allowed">
+          <div class="flex">{{ footerButtonText }}</div>
+          <mat-icon class="flex">arrow_forward</mat-icon>
+        </button>
+        }
+      </div>
+    </div>
+  </footer>
+  }
+  @if (examViewMode === 'results') {
+  <footer
+    class="fixed bottom-0 left-0 right-0 bg-neutral-50 dark:bg-neutral-900 border-t dark:border-neutral-700 p-4 shadow-md z-50">
+    <!-- <div>sdf</div> -->
+    <div class="max-w-xl mx-auto flex items-center justify-between">
+      <button (click)="navigateToTeacherPage()"
+        class="px-4 py-2 flex flex-row items-center align-middle p-2 sm:p-3 gap-1 text-sm font-semibold  text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">
+        Return to Teacher
+      </button>
+    </div>
+  </footer>
+  }
+
+</div>
+
+}
+
+<!-- <div class="p-6 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 min-h-[calc(100vh-10rem)]">
+  @if (examViewMode === 'loading') {
+    <p>Loading...</p>
+  } @else if (examViewMode === 'taking_question') {
+    <p>Taking question...</p>
+    @if (exam) {
+      <p>Exam exists.</p>
+      @defer {
+        <p>Defer content</p>
+      } @placeholder {
+        <p>Placeholder</p>
+      }
+    } @else {
+      <p>No exam.</p>
+    }
+  } @else {
+    <p>Other mode.</p>
+  }
+</div>
+ -->
+
+
+
+
+<!-- <div class="p-6 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 min-h-[calc(100vh-10rem)]">
+  @if (examViewMode === 'loading') {
+    <p>Loading...</p>
+  } @else if (examViewMode === 'taking_question') {
+    <p>Taking question...</p>
+    @if (exam) {
+      <p>Exam exists.</p>
+      @defer {
+         <p>Defer content</p>
+      } @placeholder {
+         <p>Placeholder</p>
+      }
+    } @else {
+      <p>No exam.</p>
+    }
+  } @else {
+    <p>Other mode.</p>
+  }
+</div> -->
+
+
+
+
+<!-- Lo de abajo sigue funcionando con el TS que tenemos -->
+<!-- Lo de abajo sigue funcionando con el TS que tenemos -->
+<!-- Lo de abajo sigue funcionando con el TS que tenemos -->
+<!-- Lo de abajo sigue funcionando con el TS que tenemos -->
+
+<!-- <div class="max-w-4xl mx-auto p-6 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700">
+  @if (isOkToDoTheExam) {
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-800 dark:text-neutral-200 mb-4">{{ exam?.title }}</h1>
+      @for (pq of preparedQuestions; track pq.question.text; let i = $index) {
+        <div class="mb-6">
+          <h3 class="text-lg font-medium text-neutral-800 dark:text-neutral-200 mb-2">{{ i + 1 }}. {{ pq.question.text }}</h3>
+          @for (option of pq.options; track option.text) {
+            <div class="flex items-center mb-2">
+              <input type="radio" [name]="'question_' + i" (change)="selectAnswer(i, option.text)" class="mr-2" [disabled]="!isOkToDoTheExam">
+              <span class="text-base text-neutral-600 dark:text-neutral-400">{{ option.text }}</span>
+            </div>
+          }
+        </div>
+      }
+      <button (click)="submitExam()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600" [disabled]="!isOkToDoTheExam">
+        Submit Exam
+      </button>
+    </div>
+  } @else {
+    <div class="text-center">
+      @if (timeRemaining > 0) {
+        <p class="text-lg text-neutral-800 dark:text-neutral-200 mb-4">
+          Tiempo restante: {{ timeRemaining | number:'1.0-0' }} minutos
+        </p>
+      } @else {
+        <button (click)="reloadPage()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+          Reintentar examen
+        </button>
+      }
+    </div>
+  }
+</div> -->

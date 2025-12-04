@@ -1,0 +1,162 @@
+<div class="max-w-4xl mx-auto bg-white dark:bg-neutral-800 rounded-lg shadow-lg mb-2 p-6 border border-neutral-200 dark:border-neutral-700">
+  <!-- Header -->
+  <div class="flex flex-row items-center align-middle space-x-2 h-7 gap-1">
+    <div class="flex grow items-center space-x-2">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">person</mat-icon>
+      <h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ user.username }}</h2>
+    </div>
+    <div (click)="switchShowDetails()" class="cursor-pointer rounded-lg border p-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+      Details
+    </div>
+    <div (click)="switchShowExamsResults()" class="flex flex-row cursor-pointer items-center align-middle rounded-lg border border-neutral-200 dark:border-neutral-700 p-2 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+      <div class="mr-1">
+        Results
+      </div>
+      <div>
+        @if(!showExamsResult) {
+          <mat-icon class="text-neutral-600 dark:text-neutral-300 items-center align-middle">expand_circle_down</mat-icon>
+        }@else {
+          <mat-icon class="text-neutral-600 dark:text-neutral-300 items-center align-middle">expand_circle_up</mat-icon>
+        }
+      </div>
+
+    </div>
+  </div>
+
+  @if(showDetails) {
+
+  <!-- Details Section -->
+  <div class="grid grid-cols-1 gap-4 mt-4">
+    <!-- Username -->
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">person_outline</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Username</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ user.username }}</p>
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">mail</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Email</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ user.email }}</p>
+      </div>
+    </div>
+
+    <!-- Lastname -->
+    @if(user.lastname) {
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">badge</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Lastname</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ user.lastname || 'N/A' }}</p>
+      </div>
+    </div>
+    }
+
+  </div>
+
+
+  }
+
+
+  @if(showExamsResult) {
+
+  <!-- Results -->
+  <div class="mt-4">
+    <h3 class="text-lg font-medium text-neutral-800 dark:text-neutral-200 mb-2">Exam Results</h3>
+    @if (results.length === 0) {
+    <p class="text-neutral-600 dark:text-neutral-400">No results available for this student.</p>
+    } @else {
+    <div class="grid grid-cols-1 gap-4">
+      @for (result of results; track result.id) {
+      <!-- Result Card -->
+      <div class="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <mat-icon class="text-neutral-600 dark:text-neutral-300">school</mat-icon>
+            <h4 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">{{ result.examTitle }}</h4>
+          </div>
+          <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ result.time | date: 'short' }}</span>
+        </div>
+
+        <!-- Grade Section -->
+        <div class="mb-3">
+          <div class="flex items-center space-x-2">
+            <mat-icon class="text-neutral-600 dark:text-neutral-300 my-2">star</mat-icon>
+            <h5 class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Grade</h5>
+          </div>
+          <div class="flex flex-row items-center mt-1 gap-4">
+            <div class="flex text-lg font-bold text-neutral-900 dark:text-neutral-100">
+              {{ (result.correctAnswers / result.totalQuestions * 100) | number: '1.0-0' }}%
+            </div>
+            <div class="grow bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
+              <div class="bg-blue-500 h-2 rounded-full"
+                [style.width]="(result.correctAnswers / result.totalQuestions * 100) + '%'"></div>
+            </div>
+            <div class="flex text-xs text-neutral-600 dark:text-neutral-400">
+              {{ result.correctAnswers }} out of {{ result.totalQuestions }} questions correct
+            </div>
+          </div>
+        </div>
+
+        @if(showExtraExamDetails) {
+        <!-- Details Section -->
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <!-- Total Questions -->
+          <div class="flex items-center space-x-2">
+            <mat-icon class="text-neutral-600 dark:text-neutral-300">help_outline</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-800 dark:text-neutral-200">Total Questions</p>
+              <p class="text-neutral-600 dark:text-neutral-400">{{ result.totalQuestions }}</p>
+            </div>
+          </div>
+
+          <!-- Questions Answered -->
+          <div class="flex items-center space-x-2">
+            <mat-icon class="text-neutral-600 dark:text-neutral-300">check_circle</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-800 dark:text-neutral-200">Questions Answered</p>
+              <p class="text-neutral-600 dark:text-neutral-400">{{ result.questions_answered }}</p>
+            </div>
+          </div>
+
+          <!-- Correct Answers -->
+          <div class="flex items-center space-x-2">
+            <mat-icon class="text-neutral-600 dark:text-neutral-300">done</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-800 dark:text-neutral-200">Correct Answers</p>
+              <p class="text-neutral-600 dark:text-neutral-400">{{ result.correctAnswers }}</p>
+            </div>
+          </div>
+
+          <!-- Difficulty -->
+          <div class="flex items-center space-x-2">
+            <mat-icon class="text-neutral-600 dark:text-neutral-300">trending_up</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-800 dark:text-neutral-200">Difficulty</p>
+              <p class="text-neutral-600 dark:text-neutral-400">
+                @switch (result.difficulty) {
+                @case (1) { Easy }
+                @case (2) { Moderate }
+                @case (3) { Challenging }
+                @case (4) { Hard }
+                @case (5) { Very Difficult }
+                @default { Unknown }
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  }
+</div>

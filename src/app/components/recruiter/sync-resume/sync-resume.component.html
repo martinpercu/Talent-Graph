@@ -1,0 +1,103 @@
+<div class="max-w-6xl mx-auto p-6 space-y-6">
+
+  <!-- Header -->
+  <!-- <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Resume Synchronization</h1>
+    <p class="text-gray-600">Manage resume synchronization with the AI Agent database</p>
+  </div> -->
+
+  <!-- Warning Section - Migration -->
+  <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+       (click)="runMigration()">
+    <div class="flex items-start">
+      <mat-icon class="text-red-500 mr-3">warning</mat-icon>
+      <div>
+        <h3 class="text-lg font-semibold text-red-700 mb-1">Database Migration Tool</h3>
+        <p class="text-red-600 text-sm mb-2">Add IDs to existing resumes</p>
+        <div class="inline-flex items-center px-3 py-1 bg-red-100 rounded-full">
+          <mat-icon class="text-red-700 text-sm mr-1">error_outline</mat-icon>
+          <span class="text-xs font-bold text-red-700">CAUTION - Use only once</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Sync Section -->
+  <div class="bg-white rounded-lg shadow-md p-8">
+    <div class="flex items-center mb-6">
+      <mat-icon class="text-blue-600 mr-3">sync_alt</mat-icon>
+      <h2 class="text-2xl font-semibold text-gray-800">AI Agent Synchronization</h2>
+    </div>
+
+    <p class="text-gray-600 mb-6">
+      Synchronize resumes with the AI Agent for intelligent analysis and matching
+    </p>
+
+    <!-- Action Buttons Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <!-- Sync All Button -->
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="syncAllResumeToAgent()"
+        [disabled]="syncing"
+        class="h-24 flex flex-col items-center justify-center space-y-2">
+
+        @if (syncing) {
+          <!-- <mat-spinner diameter="24"></mat-spinner> -->
+          <span class="text-sm">Syncing...</span>
+        } @else {
+          <mat-icon>cloud_upload</mat-icon>
+          <span class="text-sm font-medium">Sync All Resumes</span>
+        }
+      </button>
+
+      <!-- Sync One Button -->
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="syncOneResumeToAgent()"
+        [disabled]="syncing"
+        class="h-24 flex flex-col items-center justify-center space-y-2 bg-purple-500 hover:bg-purple-600">
+
+        @if (syncing) {
+          <!-- <mat-spinner diameter="24"></mat-spinner> -->
+          <span class="text-sm">Syncing...</span>
+        } @else {
+          <mat-icon>upload_file</mat-icon>
+          <span class="text-sm font-medium">Sync Single Resume</span>
+        }
+      </button>
+
+      <!-- Delete Button -->
+      <button
+        mat-raised-button
+        color="warn"
+        (click)="syncDeleteOneResumeToAgent()"
+        class="h-24 flex flex-col items-center justify-center space-y-2">
+
+        <mat-icon>delete_forever</mat-icon>
+        <span class="text-sm font-medium">Delete Resume</span>
+      </button>
+
+    </div>
+
+    <!-- Info Box -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div class="flex items-start">
+        <mat-icon class="text-blue-600 mr-2 mt-0.5">info</mat-icon>
+        <div class="text-sm text-blue-800">
+          <p class="font-medium mb-1">About synchronization:</p>
+          <ul class="list-disc list-inside space-y-1 text-blue-700">
+            <li><strong>Sync All:</strong> Sends all resumes to the AI Agent for analysis</li>
+            <li><strong>Sync Single:</strong> Test synchronization with one specific resume</li>
+            <li><strong>Delete:</strong> Removes a resume from the AI Agent database</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

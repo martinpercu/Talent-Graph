@@ -1,0 +1,51 @@
+
+
+/* @import url('https://fonts.googleapis.com/icon?family=Material+Icons'); */
+@import url('https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded');
+
+/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; }
+/* body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; } */
+
+.material-symbols-rounded {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 100,
+    'GRAD' 0,
+    'opsz' 48;
+}
+
+
+/* Scrollbar base (light mode) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f9f9f9; /* neutral.150 */
+}
+::-webkit-scrollbar-thumb {
+  background-color: #B4B4B4; /* neutral.350 */
+  border-radius: 8px;
+}
+
+/* Scrollbar dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: #212121; /* neutral.850 */
+}
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #303030; /* neutral.750 */
+}
+
+/* Firefox */
+body {
+  scrollbar-width: thin;
+  scrollbar-color: #B4B4B4 #f9f9f9;
+}
+
+.dark body {
+  scrollbar-color: #303030 #212121;
+}

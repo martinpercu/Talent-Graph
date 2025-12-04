@@ -1,0 +1,162 @@
+
+  <app-candidate-header></app-candidate-header>
+
+@if(candidateService.candidateSig() == null) {
+
+
+  <div class="flex flex-col items-center sm:justify-center min-h-screen pt-16 px-2 sm:p-4 font-sans bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200">
+      <!-- Título y mensaje introductorio -->
+
+    @if(job){
+      <div class="flex flex-col">
+      <!-- <h1 class="text-xl font-extrabold text-center text-neutral-900 dark:text-neutral-100 mb-4">Bienvenido</h1> -->
+      <p class="text-center text-neutral-600 dark:text-neutral-200 mb-6 text-lg sm:text-xl">
+          {{ "candidate.welcome_to_process" | transloco}}<br><span class="font-semibold"> "{{ job.name }}" </span>
+      </p>
+      <!-- <p class="text-center text-neutral-600 dark:text-neutral-400 mb-2 text-base">
+          Inicia sesión o crea tu cuenta.
+      </p> -->
+
+      </div>
+    }
+
+    <div class="flex flex-col bg-white dark:bg-neutral-800 py-2 px-8 rounded-lg shadow-xl max-w-md border border-neutral-200 dark:border-neutral-700">
+
+
+    @if(showLogin){
+      <div class="flex flex-col">
+        <app-candidate-login></app-candidate-login>
+        <div>
+          <app-candidate-social-buttons></app-candidate-social-buttons>
+        </div>
+        <div class="text-center">
+          <button (click)="switchLoginRegister()"
+            class="cursor-pointer hover:underline text-center pt-4 pb-3 text-sm">
+              {{ "candidate_profile.not_account" | transloco}}
+          </button>
+        </div>
+      </div>
+    }
+    @if(showRegister){
+    <div class="flex flex-col">
+      <app-candidate-register></app-candidate-register>
+      <div>
+        <app-candidate-social-buttons></app-candidate-social-buttons>
+      </div>
+      <div class="text-center">
+        <button (click)="switchLoginRegister()"
+          class="cursor-pointer hover:underline text-center pt-4 pb-3 text-sm">
+            {{ "candidate_profile.already_account" | transloco}}
+        </button>
+      </div>
+    </div>
+    }
+    </div>
+
+  </div>
+}
+
+
+@if(candidateService.candidateSig()) {
+  <!-- <div class="fixed"> -->
+    <!-- <app-candidate-header></app-candidate-header> -->
+  <!-- </div> -->
+
+<!-- <div class="mt-20" (click)="testeo()">chequear signed canddate</div> -->
+
+@if(!candidateService.candidateSig()?.resumeInDB && job && recruiterId){
+
+<div class="bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+ <div class="flex flex-col">
+  <p class="text-center text-neutral-600 dark:text-neutral-400 mb-8 text-xl sm:text-2xl">
+    {{ "candidate.excellent" | transloco}} {{ candidateService.candidateSig()?.username }} <br>{{ "candidate.continue_upload_cv" | transloco}}<br>
+  </p>
+</div>
+
+  <div class="flex flex-col bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl w-full max-w-md border border-neutral-200 dark:border-neutral-700">
+    <app-upload
+      [jobId]="this.job.jobId"
+      [jobDescription]="this.job.description"
+      [recruiterId]="this.recruiterId">
+    </app-upload>
+  </div>
+</div>
+}
+
+<!-- @if(!candidateService.candidateSig()?.resumePath && candidateService.candidateSig()?.lastname){
+<div class="bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+  <div class="flex flex-col bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl w-full max-w-md border border-neutral-200 dark:border-neutral-700">
+    <div class="flex flex-col">
+      <p class="text-center text-neutral-600 dark:text-neutral-400 mb-8 text-lg">
+        {{ "candidate.excellent" | transloco}} {{ candidateService.candidateSig()?.username }} <br>{{ "candidate.continue_upload_cv" | transloco}}<br>
+      </p>
+    </div>
+    <app-upload></app-upload>
+  </div>
+</div>
+} -->
+
+
+
+@if(candidateService.candidateSig()?.resumeInDB && job){
+  <div class="bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 flex flex-col items-center justify-center min-h-screen p-1 sm:p-4 font-sans">
+      <!-- <app-candidate-resume-edit [jobId]="this.job.jobId"></app-candidate-resume-edit> -->
+      <app-candidate-resume-basic-confirmation [jobId]="this.job.jobId"></app-candidate-resume-basic-confirmation>
+  </div>
+}
+
+
+
+
+<!-- @if(candidateService.candidateSig()?.resumeInDB && lastCandidateJob){
+  <div class="bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+    <div class="flex flex-col text-center bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl w-full max-w-md border border-neutral-200 dark:border-neutral-700">
+      Tu perfil está siendo evaluado para el puesto de<br>
+      <span class="font-semibold mt-1">"{{ lastCandidateJob.name }}."</span>
+    </div>
+  </div>
+} -->
+
+
+
+@if(job && candidateService.candidateSig()?.resumePath && candidateService.candidateSig()?.lastname){
+<div class="bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+  <div class="flex flex-col bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl w-full max-w-md border border-neutral-200 dark:border-neutral-700">
+    <div class="flex flex-col">
+      <p class="text-neutral-600 dark:text-neutral-400 mb-8 text-lg">
+        {{ candidateService.candidateSig()?.username }},
+        {{ "candidate.your_application_for" | transloco}}
+        <span class="font-semibold">{{ job.name }}</span>
+        {{ "candidate.been_ok_received" | transloco}}.<br>
+        {{ "candidate.sincerely_interest" | transloco}}.<br><br>
+        <span class="font-semibold">{{ "candidate.what_next" | transloco}}</span><br>
+        {{ "candidate.our_recruitment" | transloco}}.
+        {{ "candidate.if_you_match" | transloco}}.
+      </p>
+    </div>
+  </div>
+</div>
+}
+
+
+<!-- <div>
+  <app-candidate-edit></app-candidate-edit>
+</div> -->
+
+
+
+<!-- @if(job){
+    <div class="flex flex-auto">
+      Empresa X
+    ¡Gracias por tu interés en unirte a Empresa X! <br>
+    Para comenzar tu solicitud, por favor, inicia sesión o crea una cuenta.
+    </div>
+    <div>
+      {{ "candidate.this_job" | transloco }}Este es el JOB: <br>
+      Titulo {{ job.name }} <br>
+      Descripcion: {{ job.description }} <br>
+      ID unico: {{ job.jobId }} <br>
+      Exam ID unico: {{ job.examId }} <br>
+    </div>
+  } -->
+}

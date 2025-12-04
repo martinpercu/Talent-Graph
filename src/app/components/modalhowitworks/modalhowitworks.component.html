@@ -1,0 +1,67 @@
+<div (click)="closeModal()" class="z-[51] absolute flex flex-col w-screen h-full bg-neutral-700 bg-opacity-90 dark:bg-neutral-900 dark:bg-opacity-95">
+  <div (click)="$event.stopPropagation()"
+    class="m-auto max-w-[90%] sm:max-w-screen-sm md:max-w-screen-md py-4 px-1 sm:p-10 bg-white border border-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 rounded-2xl shadow">
+
+    <div class="flex flex-col items-center text-center text-xs sm:text-sm text-neutral-700 dark:text-neutral-200">
+      <div class="mb-5 sm:mb-7 mt-4 px-4 text-base sm:text-xl font-medium text-brand">
+        How It Works
+      </div>
+
+      <div class="pb-6 w-11/12 text-left">
+        <div class="pb-4">
+          This assistant helps you explore <strong>{{this.pagesService.defaultTitle()}}</strong>, answering questions from the full course by default.
+          <mat-icon class="pt-1">speaker_notes</mat-icon>
+        </div>
+        <div class="pb-4">
+          The content is split into <span class="font-medium">Sections</span>. Select one and the assistant will focus only on that topic.
+        </div>
+        <div class="pb-2">
+          💬 You can ask questions or let the assistant guide you through the section.
+        </div>
+      </div>
+
+      <!-- Explicación de los tres botones en el chat -->
+      <div class="pb-4 w-11/12 mt-4">
+        <div class="pb-4 font-semibold text-sm">
+          Chat Interaction Tools
+        </div>
+        <div class="text-left flex flex-col gap-2">
+          <div class="flex items-start mb-2">
+            <div class="w-8">
+              <mat-icon class="sm:text-3xl !w-10 !h-10">chat_info</mat-icon>
+            </div>
+            <span class="ml-4">Teacher Explains – The teacher will start explaining the content of the selected section, ensuring you learn the specific theme in depth.</span>
+          </div>
+          <div class="flex items-start mb-2">
+            <div class="w-8">
+              <mat-icon class="sm:text-3xl !w-10 !h-10">person_raised_hand</mat-icon>
+            </div>
+            <span class="ml-4">Simple Question – The teacher will ask you a basic question related to the chosen topic to reinforce your understanding.</span>
+          </div>
+          <div class="flex items-start mb-2">
+            <div class="w-8">
+              <mat-icon class="sm:text-3xl !w-10 !h-10">quiz</mat-icon>
+            </div>
+            <span class="ml-4">Challenging Quiz – The teacher will test you with more targeted and difficult questions based on the selected section.</span>
+          </div>
+          <div class="flex items-start mb-2 ">
+            <div class="h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full">
+              <mat-icon class="text-white dark:text-neutral-800">volume_off</mat-icon>
+            </div>
+            <div class="h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full">
+              <mat-icon class="text-white dark:text-neutral-800">spatial_audio_off</mat-icon>
+            </div>
+            <span class="ml-4">Voice Mode – The teacher will also speak it out loud. (Only in Chrome).</span>
+          </div>
+        </div>
+      </div>
+
+      <div (click)="closeModal()" class="flex flex-col gap-2 py-2 sm:pt-6">
+        <div class="flex items-center gap-2 text-sm font-semibold bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 rounded-lg p-4 cursor-pointer">
+          <mat-icon>rocket_launch</mat-icon>
+          Get Started!
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

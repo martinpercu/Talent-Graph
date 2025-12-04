@@ -1,0 +1,41 @@
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Crear Suscripción</h1>
+        <form (ngSubmit)="createSubscription()">
+          <div class="mb-4">
+            <label for="customerId" class="block text-gray-700 font-medium mb-2">ID de Cliente</label>
+            <input type="text" id="customerId" [(ngModel)]="customerId" name="customerId"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   placeholder="cus_..." required>
+          </div>
+          <div class="mb-4">
+            <label for="fixedPriceId" class="block text-gray-700 font-medium mb-2">ID de Precio Fijo</label>
+            <input type="text" id="fixedPriceId" [(ngModel)]="fixedPriceId" name="fixedPriceId"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring-indigo-500"
+                   placeholder="price_..." required>
+          </div>
+          <div class="mb-6">
+            <label for="meteredPriceId" class="block text-gray-700 font-medium mb-2">ID de Precio por Uso</label>
+            <input type="text" id="meteredPriceId" [(ngModel)]="meteredPriceId" name="meteredPriceId"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring-indigo-500"
+                   placeholder="price_..." required>
+          </div>
+
+          <div id="payment-element" class="mb-6"></div>
+
+          <button type="submit" [disabled]="isLoading()"
+                  class="w-full px-4 py-2 text-white font-semibold rounded-lg transition-colors
+                         " [ngClass]="{'bg-indigo-600 hover:bg-indigo-700 cursor-pointer': !isLoading(), 'bg-gray-400 cursor-not-allowed': isLoading()}">
+            <span *ngIf="!isLoading()">Crear Suscripción</span>
+            <span *ngIf="isLoading()">Procesando...</span>
+          </button>
+        </form>
+
+        <div *ngIf="message()" class="mt-6 p-4 rounded-lg"
+             [ngClass]="{'bg-green-100 text-green-700': message().includes('Éxito'), 'bg-red-100 text-red-700': message().includes('Error')}">
+          {{ message() }}
+        </div>
+      </div>
+    </div>
+    <!-- Carga de Stripe JS -->
+    <!-- <script src="https://js.stripe.com/v3/"></script> -->

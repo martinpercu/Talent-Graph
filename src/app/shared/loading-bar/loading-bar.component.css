@@ -1,0 +1,42 @@
+/* En loading-bar.component.css */
+.loading-bar-container {
+width: 100%;
+height: 8px;
+background-color: transparent;
+border-radius: 2px;
+overflow: hidden;
+position: relative;
+}
+
+.loading-bar-animation {
+position: absolute;
+top: 0;
+left: 0;
+height: 100%;
+width: 100%;
+transform: translateX(-100%);
+animation: loading-bar-movement 40s infinite linear,
+blinking 1.5s infinite; /* Añadimos la animación de parpadeo */
+}
+
+.loading-bar-animation.blue {
+background-color: #3b82f6;
+z-index: 2;
+}
+
+.loading-bar-animation.green {
+background-color: #16a34a;
+animation-delay: 20s;
+z-index: 1;
+}
+
+@keyframes loading-bar-movement {
+0% { transform: translateX(-100%); }
+100% { transform: translateX(300%); }
+}
+
+@keyframes blinking {
+0% { opacity: 1; }
+50% { opacity: 0.1; }
+100% { opacity: 1; }
+}

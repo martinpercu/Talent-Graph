@@ -1,0 +1,96 @@
+<div class="bg-white dark:bg-neutral-800 rounded-lg shadow-lg mb-2 p-6 border border-neutral-200 dark:border-neutral-700">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center space-x-2">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">school</mat-icon>
+      <h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ result.examTitle }}</h2>
+    </div>
+    <span class="text-sm text-neutral-500 dark:text-neutral-400">{{ result.time | date: 'medium' }}</span>
+  </div>
+
+  <!-- Grade Section -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-2">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">star</mat-icon>
+      <h3 class="text-lg font-medium text-neutral-800 dark:text-neutral-200">Grade</h3>
+    </div>
+    <div class="mt-2">
+      <p class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+        {{ (result.correctAnswers / result.totalQuestions * 100) | number: '1.0-0' }}%
+      </p>
+      <div class="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2.5 mt-2">
+        <div class="bg-blue-500 h-2.5 rounded-full" [style.width]="(result.correctAnswers / result.totalQuestions * 100) + '%'"></div>
+      </div>
+      <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+        {{ result.correctAnswers }} out of {{ result.totalQuestions }} questions correct
+      </p>
+    </div>
+  </div>
+
+  <!-- Details Section -->
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <!-- Total Questions -->
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">help_outline</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Total Questions</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ result.totalQuestions }}</p>
+      </div>
+    </div>
+
+    <!-- Questions Answered -->
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">check_circle</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Questions Answered</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ result.questions_answered }}</p>
+      </div>
+    </div>
+
+    <!-- Correct Answers -->
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">done</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Correct Answers</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ result.correctAnswers }}</p>
+      </div>
+    </div>
+
+    <!-- Difficulty -->
+    <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">trending_up</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Difficulty</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">
+          @switch (result.difficulty) {
+            @case (1) { Easy }
+            @case (2) { Moderate }
+            @case (3) { Challenging }
+            @case (4) { Hard }
+            @case (5) { Very Difficult }
+            @default { Unknown }
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Exam Title (Redundant) -->
+    <!-- <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">book</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Exam</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ result.examTitle }}</p>
+      </div>
+    </div> -->
+
+    <!-- Time (Redundant) -->
+    <!-- <div class="flex items-center space-x-3">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">schedule</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Date and Time</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ result.time | date: 'full' }}</p>
+      </div>
+    </div> -->
+
+  </div>
+</div>

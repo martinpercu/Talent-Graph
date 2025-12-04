@@ -1,0 +1,24 @@
+<div class="text-center flex flex-col w-max m-auto">
+
+  @if(errorMessage) {
+  <div>
+    {{ errorMessage }}
+  </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div>
+      <input class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-md mb-2 focus:border-neutral-400 w-full px-2.5 py-1 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400"
+      type="text" placeholder="Email" formControlName="email" />
+    </div>
+    <div>
+      <input class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-md mb-2 focus:border-neutral-400 w-full px-2.5 py-1 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400"
+      type="password" placeholder="Password" formControlName="password" />
+    </div>
+    <div>
+      <button class="m-2 py-1 px-4 bg-black dark:bg-white text-white dark:text-black rounded-full" type="submit">
+        Log In
+      </button>
+    </div>
+  </form>
+</div>

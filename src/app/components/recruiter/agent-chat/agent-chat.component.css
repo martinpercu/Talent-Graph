@@ -1,0 +1,20 @@
+.arrow-show {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out 0.2s; /* 1 segundo para la animación, con un retraso de 1 segundo */
+  opacity: 1;
+}
+
+.arrow-not-show {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out 0.2s; /* 1 segundo para la animación, con un retraso de 1 segundo */
+}
+
+
+.loading-response {
+  padding: 20px;
+  text-align: center;
+}
+
+textarea {
+  transition: height 0.1s ease-in-out;
+}

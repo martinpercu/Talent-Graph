@@ -1,0 +1,114 @@
+<p>stripe-card works!</p>
+<div class="flex items-center justify-center min-h-screen bg-gray-100 p-4 font-inter">
+      <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg space-y-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800">
+          Información de Pago
+        </h1>
+        <p class="text-center text-gray-600">
+          Por favor, introduce los detalles de tu tarjeta para continuar.
+        </p>
+
+        <div *ngIf="loading()" class="flex justify-center items-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+
+        <div *ngIf="error()">
+          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline ml-2">{{ error() }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="success()" class="mt-4">
+          <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative" role="alert">
+            <strong class="font-bold">¡Éxito!</strong>
+            <span class="block sm:inline ml-2">El pago ha sido completado con éxito. ¡Gracias!</span>
+          </div>
+        </div>
+
+        <!-- Contenedor del formulario de tarjeta de Stripe, siempre presente en el DOM -->
+        <div [class.hidden]="loading() || success()" class="space-y-4">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <label for="card-element" class="text-gray-700 font-medium">Tarjeta de crédito o débito</label>
+            <div id="card-element" class="mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
+          </div>
+
+          <button
+            (click)="addCard()"
+            class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            <span *ngIf="!loading()">Add Card</span>
+            <div *ngIf="loading()" class="flex justify-center items-center">
+              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            </div>
+          </button>
+
+          <button
+            (click)="handlePayment()"
+            class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            <span *ngIf="!loading()">Pagar Con Tarjeta Guardada</span>
+            <div *ngIf="loading()" class="flex justify-center items-center">
+              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            </div>
+          </button>
+
+          <button
+            (click)="handleSubscription()"
+            class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            <span *ngIf="!loading()">Pagar Subscripcion</span>
+            <div *ngIf="loading()" class="flex justify-center items-center">
+              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+
+
+
+
+
+  <!-- <div class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg space-y-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800">
+          Información de Pago
+        </h1>
+        <p class="text-center text-gray-600">
+          Por favor, introduce los detalles de tu tarjeta para continuar.
+        </p>
+
+        <div *ngIf="loading()" class="flex justify-center items-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+
+        <div *ngIf="error()">
+          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline ml-2">{{ error() }}</span>
+          </div>
+        </div>
+
+        <div [class.hidden]="loading()" class="space-y-4">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <label for="card-element" class="text-gray-700 font-medium">Tarjeta de crédito o débito</label>
+            <div id="card-element" class="mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
+          </div>
+
+          <button
+            (click)="handlePayment()"
+            [disabled]="loading()"
+            class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            <span *ngIf="!loading()">Pagar</span>
+            <div *ngIf="loading()" class="flex justify-center items-center">
+              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            </div>
+          </button>
+        </div>
+
+      </div>
+    </div> -->

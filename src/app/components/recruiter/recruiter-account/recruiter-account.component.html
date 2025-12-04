@@ -1,0 +1,314 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-500 bg-opacity-90 p-2 sm:p-8"
+  (click)="visualStatesService.handleRecruiterAccountShow()"
+>
+  <div
+    class="max-w-4xl max-h-[98dvh] p-4 overflow-y-auto bg-white dark:bg-black dark:border dark:border-neutral-400 rounded-lg shadow-lg relative flex flex-col"
+    (click)="$event.stopPropagation()"
+  >
+
+@if(this.recruiter) {
+
+
+
+
+<form [formGroup]="form" (ngSubmit)="saveUser($event)">
+
+  <!-- @if(editBasicInfo == false) {
+  <div class="flex justify-between items-start mb-4">
+    <div class="text-lg font-medium">
+      {{ this.recruiter.username }} {{ this.recruiter.lastname }}
+    </div>
+    <button
+      type="button"
+      (click)="changeEditPersonalInfo()"
+      class="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium"
+    >
+      Edit
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+    <div>
+      <span class="font-semibold">Email:</span> {{ this.recruiter.email }}
+    </div>
+    <div>
+      <span class="font-semibold">Phone:</span> {{ this.recruiter.cellphone }}
+    </div>
+
+  </div>
+  } -->
+
+  <!-- FORMULARIO DE EDICIÓN DE INFORMACIÓN PERSONAL -->
+  @if(editBasicInfo == true) {
+  <div class="grid gap-y-4 gap-x-6 mb-6 sm:grid-cols-2">
+    <!-- First Name -->
+    <div>
+      <label
+        for="firstname"
+        class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-200"
+        >{{ "candidate_profile.firstname" | transloco }}:</label
+      >
+      <input
+        type="text"
+        id="firstname"
+        formControlName="firstname"
+        placeholder="{{ 'candidate_profile.firstname' | transloco }}"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        [class.border-green-500]="isfirstnameFieldValid"
+        [class.border-red-500]="isfirstnameFieldInvalid"
+      />
+      <div class="text-xs text-red-600 dark:text-red-400">
+        @if (firstnameField?.hasError('maxlength')){
+        <span>{{ "resume_error.max40" | transloco }}</span> } @if
+        (firstnameField?.hasError('required')){
+        <span>You must write something</span> } @if
+        (firstnameField?.hasError('minlength')){
+        <span>{{ "resume_error.minimum2" | transloco }}</span> }
+      </div>
+    </div>
+
+    <!-- Last Name -->
+    <div>
+      <label
+        for="lastname"
+        class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-200"
+        >{{ "candidate_profile.lastname" | transloco }}:
+      </label>
+      <input
+        type="text"
+        id="lastname"
+        formControlName="lastname"
+        placeholder="{{ 'candidate_profile.lastname' | transloco }}"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        [class.border-green-500]="islastnameFieldValid"
+        [class.border-red-500]="islastnameFieldInvalid"
+      />
+      <div class="text-xs text-red-600 dark:text-red-400">
+        @if (lastnameField?.hasError('maxlength')){
+        <span>{{ "resume_error.max40" | transloco }}</span> } @if
+        (lastnameField?.hasError('minlength')){
+        <span>{{ "resume_error.minimum2" | transloco }}</span> }
+      </div>
+    </div>
+
+    <!-- Business Name -->
+    <div>
+      <label
+        for="businessName"
+        class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-200"
+        >{{ "recruiter.businessName" | transloco }}:</label
+      >
+      <input
+        type="text"
+        id="businessName"
+        formControlName="businessName"
+        placeholder="{{ 'recruiter.businessName' | transloco }}"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        [class.border-green-500]="isbusinessNameFieldValid"
+        [class.border-red-500]="isbusinessNameFieldInvalid"
+      />
+      <div class="text-xs text-red-600 dark:text-red-400">
+        @if (businessNameField?.hasError('maxlength')){
+        <span>{{ "resume_error.max40" | transloco }}</span> } @if
+        (businessNameField?.hasError('minlength')){
+        <span>{{ "resume_error.minimum2" | transloco }}</span> }
+      </div>
+    </div>
+
+    <!-- Email -->
+    <!-- <div class="sm:col-span-2">
+          <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-200">Contact Email:</label>
+          <input type="email" id="email" formControlName="email"
+                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                 placeholder="john.doe@company.com" [class.border-green-500]="isemailFieldValid" [class.border-red-500]="isemailFieldInvalid">
+          <div class="text-xs text-red-600 dark:text-red-400">
+            @if (emailField?.hasError('email')){ <span>This is not a valid email</span> }
+            @if (emailField?.hasError('required')){ <span>This input is required</span> }
+            @if (emailField?.hasError('maxlength')){ <span>No more than 80 letters</span> }
+          </div>
+        </div> -->
+    <!-- <div class="flex flex-row">
+            <span class="font-semibold">Email:</span>
+            {{this.recruiter.email}}
+          </div> -->
+
+    <!-- Phone Number -->
+    <div>
+      <label
+        for="phone"
+        class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-200">
+      {{ "candidate_profile.phone_number" | transloco }}:</label
+      >
+      <div class="relative">
+        <div
+          class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none"
+        >
+          <svg
+            class="w-4 h-4 text-gray-500 dark:text-gray-400"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 19 18"
+          >
+            <path
+              d="M18 13.446a3.02 3.02 0 0 0-.946-1.985l-1.4-1.4a3.054 3.054 0 0 0-4.218 0l-.7.7a.983.983 0 0 1-1.39 0l-2.1-2.1a.983.983 0 0 1 0-1.389l.7-.7a2.98 2.98 0 0 0 0-4.217l-1.4-1.4a2.824 2.824 0 0 0-4.218 0c-3.619 3.619-3 8.229 1.752 12.979C6.785 16.639 9.45 18 11.912 18a7.175 7.175 0 0 0 5.139-2.325A2.9 2.9 0 0 0 18 13.446Z"
+            />
+          </svg>
+        </div>
+        <input
+          type="tel"
+          id="cellphone"
+          formControlName="cellphone"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          placeholder="{{
+            'candidate_profile.phone_number_placeholder' | transloco
+          }}"
+          [class.border-green-500]="isphoneFieldValid"
+          [class.border-red-500]="isphoneFieldInvalid"
+        />
+      </div>
+      <div class="text-xs text-red-600 dark:text-red-400">
+        @if (phoneField?.hasError('minlength')){
+        <span>At least 9 numbers</span> } @if
+        (phoneField?.hasError('maxlength')){
+        <span>No more than 15 numbers</span> } @if
+        (phoneField?.hasError('pattern')){ <span>Only numbers!</span> }
+      </div>
+    </div>
+
+
+
+
+    <!-- USE EXAM -- USE EXAM -->
+    <div class="flex sm:mt-4 sm:mb-4 py-1 text-gray-900 dark:text-gray-200">
+      <div class="flex items-center me-4">
+        <label for="inline-checked-checkbox" class="ms-2 text-sm font-medium ">
+          {{ "recruiter.useExams" | transloco }}
+        </label>
+      </div>
+      <div class="flex items-center me-4">
+        <input
+          type="checkbox"
+          formControlName="useExams"
+          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+        />
+      </div>
+    </div>
+
+    <!-- USE MANGER -- USE MANGER -->
+    <div class="flex sm:mt-4 sm:mb-4 py-1 text-gray-900 dark:text-gray-200">
+      <div class="flex items-center me-4">
+        <label for="inline-checked-checkbox" class="ms-2 text-sm font-medium ">
+          {{ "recruiter.use_manager" | transloco }}
+        </label>
+      </div>
+      <div class="flex items-center me-4">
+        <input
+          type="checkbox"
+          formControlName="useManager"
+          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+        />
+      </div>
+    </div>
+
+
+    <!-- USE AGENTS-AI -- USE AGENTS-AI -->
+    @if (this.recruiter.subscriptionLevel >= 5){
+    <div class="flex sm:mt-4 sm:mb-4 py-1 text-gray-900 dark:text-gray-200">
+      <div class="flex items-center me-4">
+        <label for="inline-checked-checkbox" class="ms-2 text-sm font-medium ">
+          {{ "recruiter.use_ai_agents" | transloco }}
+        </label>
+      </div>
+      <div class="flex items-center me-4">
+        <input
+          type="checkbox"
+          formControlName="useAgentsAI"
+          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+        />
+      </div>
+    </div>
+    }
+
+
+
+    <!-- City -->
+    <!-- <div class="">
+      <label
+        for="city"
+        class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-200"
+        >{{ "candidate_profile.city" | transloco }}:</label
+      >
+      <input
+        type="text"
+        id="city"
+        formControlName="city"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        [class.border-green-500]="iscityFieldValid"
+        [class.border-red-500]="iscityFieldInvalid"
+      />
+      <div class="text-xs text-red-600 dark:text-red-400"></div>
+    </div> -->
+
+    <!-- Provincia State -->
+    <!-- <div class="">
+      <label
+        for="city"
+        class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-200"
+        >{{ "candidate_profile.state" | transloco }}:</label
+      >
+      <input
+        type="text"
+        id="state"
+        formControlName="state"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+      />
+      <div class="text-xs text-red-600 dark:text-red-400"></div>
+    </div> -->
+
+    <!-- ZIP Code -->
+    <!-- <div class="sm:col-span-1">
+          <label for="zipCode" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-200">ZIP code:</label>
+          <div class="relative">
+              <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 20">
+                    <path d="M8 0a7.992 7.992 0 0 0-6.583 12.535 1 1 0 0 0 .12.183l.12.146c.112.145.227.285.326.4l5.245 6.374a1 1 0 0 0 1.545-.003l5.092-6.205c.206-.222.4-.455.578-.7l.127-.155a.934.934 0 0 0 .122-.192A8.001 8.001 0 0 0 8 0Zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
+                </svg>
+            </div>
+            <input type="tel" id="zipCode" formControlName="zipCode"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    placeholder="12345" [class.border-green-500]="iszipCodeFieldValid" [class.is-invalid]="iszipCodeFieldInvalid">
+          </div>
+          <div class="text-xs text-red-600 dark:text-red-400">
+            @if (zipCodeField?.hasError('minlength')){<span>At least 5 characters</span> }
+            @if (zipCodeField?.hasError('maxlength')){<span>No more than 8 characters</span> }
+          </div>
+        </div> -->
+
+  </div>
+
+
+  }
+
+
+
+  <div class="flex justify-end mt-6">
+    <button
+      [disabled]="form.invalid"
+      [class.opacity-50]="form.invalid"
+      [class.cursor-not-allowed]="form.invalid"
+      type="submit"
+      class="w-full sm:w-auto py-2 px-8 mt-2 text-base bg-black dark:bg-white text-white dark:text-black rounded-lg"
+    >
+      {{ "candidate_profile.save" | transloco }}
+    </button>
+  </div>
+
+</form>
+
+
+}
+
+</div>
+</div>

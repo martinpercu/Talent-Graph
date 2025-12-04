@@ -1,0 +1,24 @@
+<div class="flex h-dvh items-center justify-center bg-neutral-200 dark:bg-neutral-900">
+  <div class="w-72 px-2 pb-3 mb-9 sm:mb-28 h-fit text-sm text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 shadow">
+  @if(loginOrRegister){
+  <app-recruiter-login></app-recruiter-login>
+  <div>
+    <app-recruiter-social-buttons></app-recruiter-social-buttons>
+  </div>
+  <div class="cursor-pointer hover:underline text-center pt-4 pb-2"
+    (click)="toggleLoginRegister()">
+    {{ "auth.no_account_create_one" | transloco}}
+  </div>
+  }@else {
+  <app-recruiter-register></app-recruiter-register>
+  <div>
+    <app-recruiter-social-buttons></app-recruiter-social-buttons>
+  </div>
+  <div class="cursor-pointer hover:underline text-center pt-4 pb-2"
+    (click)="toggleLoginRegister()">
+    {{ "auth.already_account" | transloco}}
+  </div>
+  }
+
+</div>
+</div>

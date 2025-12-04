@@ -1,0 +1,30 @@
+@if(main_title){
+<nav class="fixed top-0 w-full bg-white border-gray-200 dark:bg-neutral-800">
+  <div class="max-w-screen-lg flex items-center justify-between mx-auto text-neutral-800 dark:text-neutral-50 p-2">
+    <div class="flex flex-row pl-2 gap-1 items-center">
+      <div class="flex">
+
+      <div class="w-8">
+        <img src="./../../../assets/image/bridge-logo-120.png" alt="">
+      </div>
+      </div>
+      <div class="flex">
+        <span class="ml-2">{{ main_title }}</span>
+      </div>
+    </div>
+    <div class="flex items-center">
+        @if(candidateService.candidateSig()){
+          <div class="flex items-center p-1 font-semibold">
+            <div>
+              {{ candidateService.candidateSig()?.username}}
+            </div>
+              <mat-icon class="ml-2">person_apron</mat-icon>
+          </div>
+          @if(main_title == "Central-ATS") {
+          <app-candidate-logout></app-candidate-logout>
+          }
+        }
+    </div>
+  </div>
+</nav>
+}

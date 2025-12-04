@@ -1,0 +1,733 @@
+
+@if(recruiterService.recruiterSig(); as theRecruiter){
+
+<div class="mx-auto max-w-3xl">
+  <!-- <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Selecciona un Puesto</h2> -->
+
+  <!-- <label class="block text-neutral-700 dark:text-gray-300 mb-2">
+    {{ "position_edit.select_a_job" | transloco }}
+  </label> -->
+
+
+  <!-- <select
+    [ngModel]="selectedJobId"
+    (change)="loadJob($event)"
+    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+  > -->
+  <select
+    (change)="loadJob($event)"
+    class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+  >
+    <option value="">{{ "position_edit.select_a_job" | transloco }}</option>
+    @for (job of jobs$ | async; track job.jobId) {
+      <option [value]="job.jobId">{{ job.name }}</option>
+    }
+  </select>
+</div>
+
+<div class="jobs-crud mx-auto mt-4 max-w-3xl bg-white dark:bg-neutral-800 p-2 sm:px-8 sm:pt-4 sm:pb-6 rounded-lg shadow-xl border dark:border-neutral-700">
+  <!-- <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Cargar Trabajo</h2>
+  <select
+    [ngModel]="selectedJobId"
+    (change)="loadJob($event)"
+    class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+  >
+    <option value="">Selecciona un trabajo</option>
+    @for (job of jobs$ | async; track job.jobId) {
+      <option [value]="job.jobId">{{ job.name }}</option>
+    }
+  </select> -->
+
+  <!-- <div class="flex flex-row items-center text-gray-900 dark:text-gray-100">
+
+  <div class="text-center text-sm font-light ">
+    @if(!showExpandForm){
+      {{ "position_edit.basic_view" | transloco }}
+    }@else{
+      {{ "position_edit.expand_view" | transloco }}
+    }
+  </div>
+
+  <div class="grow">
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-3 font-light text-sm">
+    <div
+      class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="handleExpandForm()"
+    >
+      <div class="flex">
+      </div>
+      <div class="flex">
+        {{ "position_edit.change_view" | transloco }}
+      </div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showExpandForm) {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >mystery</mat-icon
+        >
+        } @else {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >visibility</mat-icon
+        >
+        }
+      </div>
+    </div>
+  </div>
+
+
+  </div> -->
+
+
+  <div class="flex justify-between mt-2 sm:mt-4 mb-6 sm:mb-8 text-gray-900 dark:text-gray-100">
+    <div class="flex flex-col sm:flex-row">
+      <div class="text-xl font-semibold self-center">
+        {{ editingJobId ? ('position_edit.edit_job' | transloco) : ('position_edit.create_new_job' | transloco)  }}
+      </div>
+      <div class="text-sm font-semibold sm:ml-3 ml-0 self-center">
+        <span> -- </span>
+        @if(!showExpandForm) { {{ 'position_edit.basic_mode' | transloco  }} }
+        @if(showExpandForm) { {{ 'position_edit.expand_mode' | transloco  }} }
+        <span> -- </span>
+      </div>
+    </div>
+    <div class="">
+      <button
+        class="flex flex-row cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+        (click)="handleExpandForm()"
+      >
+        <div class="pl-2 sm:pl-0 pr-2">
+          @if(!showExpandForm){ {{ 'position_edit.expand' | transloco  }} }
+          @if(showExpandForm){ {{ 'position_edit.contract' | transloco  }} }
+        </div>
+        <mat-icon>
+          @if(!showExpandForm){arrows_output}
+          @if(showExpandForm){arrows_input}
+        </mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <form (ngSubmit)="saveJob()" class="space-y-4">
+
+
+
+  @if(!showExpandForm) {
+
+  <div>
+    <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.job_name" | transloco }}</label>
+    <input
+      class="mt-1 px-3 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+      type="text"
+      [(ngModel)]="newJob.name"
+      name="jobName"
+      required
+    />
+    @if (errorMessage) {
+      <p class="text-red-500 dark:text-red-400 text-sm mt-1">{{ errorMessage }}</p>
+    }
+  </div>
+
+    <!-- <div>
+      <div class="block text-sm font-medium text-neutral-700 dark:text-gray-300">
+        {{ "position_edit.id_unique" | transloco }} {{newJob.jobId}}
+      </div>
+    </div> -->
+
+  <div>
+    <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.description" | transloco }}</label>
+    <textarea
+      class="mt-1 px-3 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+      [(ngModel)]="newJob.description"
+      name="jobDescription"
+      rows="3"
+      required
+    ></textarea>
+  </div>
+
+  @if(theRecruiter.subscriptionLevel >= 3 && recruiterService.recruiterSig()?.useExams && this.examsListMoreThanOne){
+  <div class="flex flex-col sm:flex-row">
+    <div>
+      <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.exam_associate" | transloco }}</label>
+      <select
+        [(ngModel)]="newJob.examId"
+        name="examId"
+        class="mt-1 px-3 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+      >
+        <option value="">{{ "position_edit.without_exam" | transloco }}</option>
+        @for (exam of exams$ | async; track exam.id) {
+          <option [value]="exam.id">{{ exam.title }}</option>
+        }
+      </select>
+    </div>
+    <div class="flex flex-row items-center mt-4 sm:mt-5 sm:ml-8"
+      [ngClass]="{ 'hidden': !newJob.examId }"
+    >
+      <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.exam_state" | transloco }}</label>
+      <div class="flex items-center ml-4">
+        <span class="text-neutral-700 dark:text-gray-300">{{ newJob.examActive ? ('position_edit.enable' | transloco) : ('position_edit.disable' | transloco) }}</span>
+        <input
+          type="checkbox"
+          [(ngModel)]="newJob.examActive"
+          name="examActive"
+          class="h-4 w-4 ml-4 text-green-600 dark:text-green-400 border-gray-300 dark:border-gray-600 rounded focus:ring-green-500 dark:focus:ring-green-400"
+          [disabled]="!newJob.examId"
+        />
+      </div>
+    </div>
+
+  </div>
+
+  }
+
+
+  }
+
+  @if(showExpandForm){
+
+
+  <!-- BUTTON for expand SALARY -->
+  <div class="flex flex-col sm:flex-row gap-3 mt-2 font-light">
+    <div
+      class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="handleShowBasicDetails()"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300"
+        >work_update
+        </mat-icon>
+      </div>
+      <div class="flex pl-2">
+        {{ 'position_edit.job_description' | transloco }}
+      </div>
+      <div class="flex pl-2 ml-auto">
+        @if(!basicDetailView) {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_down</mat-icon
+        >
+        } @else {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_up</mat-icon
+        >
+        }
+      </div>
+    </div>
+  </div>
+
+  @if(basicDetailView){
+  <div>
+    <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.job_name" | transloco }}</label>
+    <input
+      class="mt-1 px-3 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+      type="text"
+      [(ngModel)]="newJob.name"
+      name="jobName"
+      required
+    />
+    @if (errorMessage) {
+      <p class="text-red-500 dark:text-red-400 text-sm mt-1">{{ errorMessage }}</p>
+    }
+  </div>
+
+
+  <div>
+    <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.description" | transloco }}</label>
+    <textarea
+      class="mt-1 px-3 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+      [(ngModel)]="newJob.description"
+      name="jobDescription"
+      rows="3"
+      required
+    ></textarea>
+  </div>
+
+
+  }
+
+
+
+  <!-- @if(theRecruiter.subscriptionLevel >= 3 && recruiterService.recruiterSig()?.useExams){
+  <div class="flex flex-col sm:flex-row">
+    <div>
+      <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.exam_associate" | transloco }}</label>
+      <select
+        [(ngModel)]="newJob.examId"
+        name="examId"
+        class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+      >
+        <option value="">{{ "position_edit.without_exam" | transloco }}</option>
+        @for (exam of exams$ | async; track exam.id) {
+          <option [value]="exam.id">{{ exam.title }}</option>
+        }
+      </select>
+    </div>
+    <div class="flex flex-row items-center mt-4 sm:mt-5 sm:ml-8"
+      [ngClass]="{ 'hidden': !newJob.examId }"
+    >
+      <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.exam_state" | transloco }}</label>
+      <div class="flex items-center ml-4">
+        <span class="text-neutral-700 dark:text-gray-300">{{ newJob.examActive ? ('position_edit.enable' | transloco) : ('position_edit.disable' | transloco) }}</span>
+        <input
+          type="checkbox"
+          [(ngModel)]="newJob.examActive"
+          name="examActive"
+          class="h-4 w-4 ml-4 text-green-600 dark:text-green-400 border-gray-300 dark:border-gray-600 rounded focus:ring-green-500 dark:focus:ring-green-400"
+          [disabled]="!newJob.examId"
+        />
+      </div>
+    </div>
+
+  </div>
+
+  } -->
+
+  <!-- <div class="flex flex-col sm:flex-row gap-3 mt-2 font-light">
+    <div
+      class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="handleExpandForm()"
+    >
+      <div class="flex">
+      </div>
+      <div class="flex pl-2">
+        Extras
+      </div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showExpandForm) {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_down</mat-icon
+        >
+        } @else {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_up</mat-icon
+        >
+        }
+      </div>
+    </div>
+  </div> -->
+
+
+
+
+  <!-- BUTTON for expand SALARY (showSalary) -->
+  <div class="flex flex-col sm:flex-row gap-3 mt-2 font-light">
+    <div
+      class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="handleShowSalary()"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300"
+        >attach_money
+        </mat-icon>
+      </div>
+      <div class="flex pl-2">
+        {{ "position_edit.salary" | transloco }}
+      </div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showSalary) {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_down</mat-icon
+        >
+        } @else {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_up</mat-icon
+        >
+        }
+      </div>
+    </div>
+  </div>
+
+
+<!-- <div class="block sm:hidden text-lg font-semibold text-center sm:text-left mt-2 text-gray-900 dark:text-gray-100">
+  {{ ('position_edit.salary' | transloco) }}
+</div> -->
+  @if(showSalary){
+
+  <div class="flex flex-row items-center sm:space-x-4 text-neutral-700 dark:text-neutral-100">
+
+    <!-- <div class="flex-auto text-xs items-center cursor-pointer rounded-lg  py-1 px-2 border border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"> -->
+    <div class="flex-auto text-xs items-center cursor-pointer rounded-lg py-1 px-2">
+      <div class="text-center"
+      [ngClass]="{'font-semibold underline' : !payView}"
+      (click)="payView && handlePayView()">
+        {{ ('position_edit.non' | transloco) }}
+      </div>
+    </div>
+    <!-- <div class="flex-auto text-xs items-center cursor-pointer rounded-lg  py-1 px-2 border border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"> -->
+    <div class="flex-auto text-xs items-center cursor-pointer rounded-lg py-1 px-2">
+      <div class="text-center"
+      [ngClass]="{'font-semibold underline' : payView}"
+      (click)="!payView && handlePayView()">
+        {{ ('position_edit.show' | transloco) }}
+      </div>
+    </div>
+
+
+  </div>
+
+
+  @if(!payView) {
+  <div class="flex flex-row justify-center text-neutral-700 dark:text-neutral-100">
+    <div class="flex text-center w-9/12 sm:w-full">
+      {{ ('position_edit.non_text' | transloco) }}
+    </div>
+  </div>
+  }
+
+  @if(payView){
+
+  <div class="flex flex-row items-center sm:space-x-4 text-neutral-700 dark:text-neutral-100">
+
+    <!-- <div class="flex-auto text-xs items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100" -->
+    <div class="flex-auto text-xs items-center cursor-pointer rounded-lg py-1 px-1"
+      [ngClass]="{'underline border' : salaryView === 'hour'}">
+      <div class="text-center"
+      (click)="setSalaryView('hour')">
+        {{ ('position_edit.perHour' | transloco) }}
+      </div>
+    </div>
+    <!-- <div class="flex-auto text-xs items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100" -->
+    <div class="flex-auto text-xs items-center cursor-pointer rounded-lg py-1 px-1"
+      [ngClass]="{'underline border' : salaryView === 'week'}">
+      <div class="text-center"
+      (click)="setSalaryView('week')">
+        {{ ('position_edit.week' | transloco) }}
+      </div>
+    </div>
+    <!-- <div class="flex-auto text-xs items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100" -->
+    <div class="flex-auto text-xs items-center cursor-pointer rounded-lg py-1 px-1"
+      [ngClass]="{'underline border' : salaryView === 'month'}">
+      <div class="text-center"
+      (click)="setSalaryView('month')">
+        {{ ('position_edit.month' | transloco) }}
+      </div>
+    </div>
+    <!-- <div class="flex-auto text-xs items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100" -->
+    <div class="flex-auto text-xs items-center cursor-pointer rounded-lg py-1 px-1"
+      [ngClass]="{'underline border' : salaryView === 'annual'}">
+      <div class="text-center"
+      (click)="setSalaryView('annual')">
+        {{ ('position_edit.annual' | transloco) }}
+      </div>
+    </div>
+
+  </div>
+
+
+  @if(salaryView != ''){
+  <div class="flex flex-col text-neutral-700 dark:text-neutral-100">
+
+    @if(salaryWithRange){
+    <div class="flex flex-row items-center justify-between">
+      <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">
+        @if(salaryView === 'hour'){ {{ ('position_edit.range_salary_hour' | transloco) }} }
+        @if(salaryView === 'week'){ {{ ('position_edit.range_salary_week' | transloco) }} }
+        @if(salaryView === 'month'){ {{ ('position_edit.range_salary_month' | transloco) }} }
+        @if(salaryView === 'annual'){ {{ ('position_edit.range_salary_year' | transloco) }} }
+      </label>
+      <div class="text-xs items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+        <div class="text-center"
+        (click)="handleSalaryFixOrRange()">
+          {{ ('position_edit.show_fix' | transloco) }}
+        </div>
+      </div>
+    </div>
+    }@else {
+      <div class="flex flex-row items-center justify-between">
+        <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">
+          @if(salaryView === 'hour'){ {{ ('position_edit.salary_hour' | transloco) }} }
+          @if(salaryView === 'week'){ {{ ('position_edit.salary_week' | transloco) }} }
+          @if(salaryView === 'month'){ {{ ('position_edit.salary_month' | transloco) }} }
+          @if(salaryView === 'annual'){ {{ ('position_edit.salary_year' | transloco) }} }
+        </label>
+        <div class="text-xs items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+          <div class="text-center"
+          (click)="handleSalaryFixOrRange()">
+            {{ ('position_edit.show_range' | transloco) }}
+          </div>
+        </div>
+      </div>
+    }
+
+  </div>
+
+
+  <div class="flex flex-col text-neutral-700 dark:text-neutral-100">
+
+    @if(salaryWithRange){
+    <!-- MINIMO -->
+    <div class="flex flex-row items-center justify-between">
+      <label class="text-sm font-medium w-1/2 text-neutral-700 dark:text-gray-300">{{ ('position_edit.min_ammount' | transloco) }}</label>
+      <input
+        class="mt-1 px-3 w-1/2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+        type="number"
+        [(ngModel)]="newJob.minSalary"
+        name="minSalary"
+        required
+      />
+      @if (errorMessage) {
+        <p class="text-red-500 dark:text-red-400 text-sm mt-1">{{ errorMessage }}</p>
+      }
+    </div>
+
+
+    <!-- MAXIMO -->
+    <div class="flex flex-row items-center justify-between">
+      <label class="text-sm font-medium w-1/2 text-neutral-700 dark:text-gray-300">{{ ('position_edit.max_ammount' | transloco) }}</label>
+      <input
+        class="mt-1 px-3 w-1/2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+        type="number"
+        [(ngModel)]="newJob.maxSalary"
+        name="maxSalary"
+        required
+      />
+      @if (errorMessage) {
+        <p class="text-red-500 dark:text-red-400 text-sm mt-1">{{ errorMessage }}</p>
+      }
+    </div>
+
+    }@else {
+    <!-- FIJO -->
+    <div class="flex flex-row items-center justify-between">
+      <label class="text-sm font-medium w-1/2 text-neutral-700 dark:text-gray-300">{{ ('position_edit.fixed_ammount' | transloco) }}</label>
+      <input
+        class="mt-1 px-3 w-1/2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+        type="number"
+        [(ngModel)]="newJob.fixSalary"
+        name="fixSalary"
+        required
+      />
+      @if (errorMessage) {
+        <p class="text-red-500 dark:text-red-400 text-sm mt-1">{{ errorMessage }}</p>
+      }
+    </div>
+    }
+
+
+  </div>
+
+  }
+
+
+  }
+
+
+
+
+
+  }
+
+
+  <!-- BUTTON for expand HOURS MLOAD -->
+  <div class="flex flex-col sm:flex-row gap-3 mt-2 font-light">
+    <div
+      class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="handleShowHours()"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300"
+        >nest_clock_farsight_analog
+        </mat-icon>
+      </div>
+      <div class="flex pl-2">
+        {{ ('position_edit.workload' | transloco) }}
+      </div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showHours) {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_down</mat-icon
+        >
+        } @else {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_up</mat-icon
+        >
+        }
+      </div>
+    </div>
+  </div>
+
+  @if(showHours){
+
+  <div class="flex flex-row items-center justify-between">
+    <label class="text-sm font-medium w-2/3 text-neutral-700 dark:text-gray-300">{{ ('position_edit.weekly_hours' | transloco) }}</label>
+    <input
+      class="mt-1 px-3 w-1/3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+      type="number"
+      [(ngModel)]="newJob.hoursPerWeek"
+      name="hoursPerWeek"
+      required
+    />
+    @if (errorMessage) {
+      <p class="text-red-500 dark:text-red-400 text-sm mt-1">{{ errorMessage }}</p>
+    }
+  </div>
+
+  }
+
+
+  <!-- BUTTON for expand EXTRAS -->
+  <div class="flex flex-col sm:flex-row gap-3 mt-2 font-light">
+    <div
+      class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="handleShowExtras()"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300"
+        >encrypted
+        </mat-icon>
+      </div>
+      <div class="flex pl-2">
+        {{ ('position_edit.extras' | transloco) }}
+      </div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showExtras) {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_down</mat-icon
+        >
+        } @else {
+        <mat-icon
+          class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+          >expand_circle_up</mat-icon
+        >
+        }
+      </div>
+    </div>
+  </div>
+
+  @if(showExtras){
+
+  <!-- POSITION STATE ACTIVE/INACTIVE -->
+   <div class="flex items-center space-x-2">
+    <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">
+      {{ "position_edit.job_state" | transloco }}
+    </label>
+    <input
+      type="checkbox"
+      [(ngModel)]="newJob.active"
+      name="jobActive"
+      class="h-4 w-4 text-green-600 dark:text-green-400 border-gray-300 dark:border-gray-600 rounded focus:ring-green-500 dark:focus:ring-green-400"
+    />
+    <span class="ml-2 text-neutral-700 dark:text-gray-300">{{ newJob.active ? ('position_edit.enable' | transloco) : ('position_edit.disable' | transloco) }}</span>
+  </div>
+
+  }
+
+
+  <!-- BUTTON for expand HOURS MLOAD -->
+  @if(theRecruiter.subscriptionLevel >= 3 && recruiterService.recruiterSig()?.useExams && this.examsListMoreThanOne){
+    <div class="flex flex-col sm:flex-row gap-3 mt-2 font-light">
+      <div
+        class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+        (click)="handleShowExam()"
+      >
+        <div class="flex">
+          <mat-icon class="text-neutral-600 dark:text-neutral-300"
+          >checklist
+          </mat-icon>
+        </div>
+        <div class="flex pl-2">
+          {{ "position_edit.exam_associate" | transloco }}
+        </div>
+        <div class="flex pl-2 ml-auto">
+          @if(!showExam) {
+          <mat-icon
+            class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+            >expand_circle_down</mat-icon
+          >
+          } @else {
+          <mat-icon
+            class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+            >expand_circle_up</mat-icon
+          >
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  @if(showExam){
+
+    @if(theRecruiter.subscriptionLevel >= 3 && recruiterService.recruiterSig()?.useExams && this.examsListMoreThanOne){
+    <div class="flex flex-col sm:flex-row">
+      <div>
+        <!-- <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.exam_associate" | transloco }}</label> -->
+        <select
+          [(ngModel)]="newJob.examId"
+          name="examId"
+          class="mt-1 px-3 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-green-500 focus:border-green-500 dark:focus:ring-green-400 dark:focus:border-green-400"
+        >
+          <option value="">{{ "position_edit.without_exam" | transloco }}</option>
+          @for (exam of exams$ | async; track exam.id) {
+            <option [value]="exam.id">{{ exam.title }}</option>
+          }
+        </select>
+      </div>
+      <div class="flex flex-row items-center mt-4 sm:mt-5 sm:ml-8"
+        [ngClass]="{ 'hidden': !newJob.examId }"
+      >
+        <label class="block text-sm font-medium text-neutral-700 dark:text-gray-300">{{ "position_edit.exam_state" | transloco }}</label>
+        <div class="flex items-center ml-4">
+          <span class="text-neutral-700 dark:text-gray-300">{{ newJob.examActive ? ('position_edit.enable' | transloco) : ('position_edit.disable' | transloco) }}</span>
+          <input
+            type="checkbox"
+            [(ngModel)]="newJob.examActive"
+            name="examActive"
+            class="h-4 w-4 ml-4 text-green-600 dark:text-green-400 border-gray-300 dark:border-gray-600 rounded focus:ring-green-500 dark:focus:ring-green-400"
+            [disabled]="!newJob.examId"
+          />
+        </div>
+      </div>
+
+    </div>
+
+  }
+
+  }
+
+
+
+
+
+
+}
+
+
+
+
+
+    <div class="flex space-x-2 pt-4">
+      <button type="submit" class="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white px-4 py-2 rounded-md">
+        {{ editingJobId ? ('position_edit.update_job' | transloco) : ('position_edit.create_job' | transloco) }}
+      </button>
+      @if (editingJobId) {
+        <button
+          type="button"
+          (click)="resetForm()"
+          class="bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-neutral-700 text-white px-4 py-2 rounded-md"
+        >
+          {{ "position_edit.cancel_job" | transloco }}
+        </button>
+        <button
+          type="button"
+          (click)="deleteJob()"
+          class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white px-4 py-2 rounded-md"
+        >
+          {{ "position_edit.delete_job" | transloco }}
+        </button>
+      }
+    </div>
+  </form>
+</div>
+
+
+}

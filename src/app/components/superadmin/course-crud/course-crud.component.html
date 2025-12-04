@@ -1,0 +1,256 @@
+<p>course-crud works!</p>
+
+<div class="max-w-4xl mx-auto p-6 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700">
+  <h1 class="text-2xl font-bold text-neutral-800 dark:text-neutral-200 mb-6">Manage Courses</h1>
+
+  <!-- Error Message -->
+  @if (errorMessage) {
+    <p class="text-red-500 dark:text-red-400 mb-4">{{ errorMessage }}</p>
+  }
+
+  <!-- Form -->
+  <form class="space-y-6">
+    <!-- Select Course -->
+    <div>
+      <label class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">Select Course</label>
+      <select class="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200" (change)="loadCourse($event)" [disabled]="isSaving">
+        <option value="">-- Select a Course --</option>
+        @for (course of courses$ | async; track course.id) {
+          <option [value]="course.id" [selected]="course.id === selectedCourseId">{{ course.title }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Title -->
+    <div>
+      <label class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">Course Title</label>
+      <input type="text" class="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200" [(ngModel)]="newCourse.title" name="title" required [disabled]="isSaving">
+    </div>
+
+    <!-- Name -->
+    <div>
+      <label class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">Course Name</label>
+      <input type="text" class="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200" [(ngModel)]="newCourse.name" name="name" [disabled]="isSaving">
+    </div>
+
+    <!-- Teacher -->
+    <div>
+      <label class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">Teacher</label>
+      <select class="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200" [(ngModel)]="newCourse.teacherId" name="teacherId" (change)="updateTeacherName($event)" [disabled]="isSaving" required>
+        @for (teacher of teachers$ | async; track teacher.id) {
+          <option [value]="teacher.id">{{ teacher.name }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Enabled -->
+    <div>
+      <label class="flex items-center text-sm font-medium text-neutral-800 dark:text-neutral-200">
+        <input type="checkbox" class="mr-2" [(ngModel)]="newCourse.enabled" name="enabled" [disabled]="isSaving">
+        Enabled
+      </label>
+    </div>
+
+    <!-- Start Date -->
+    <div class="flex items-center">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">Start Date</label>
+        <input type="date" class="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200" [(ngModel)]="newCourse.startDate" name="startDate" [disabled]="isSaving">
+      </div>
+      <button type="button" class="ml-2 text-red-500 hover:text-red-700" (click)="clearStartDate()" [disabled]="isSaving">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+
+    <!-- End Date -->
+    <div class="flex items-center">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">End Date</label>
+        <input type="date" class="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200" [(ngModel)]="newCourse.endDate" name="endDate" [disabled]="isSaving">
+      </div>
+      <button type="button" class="ml-2 text-red-500 hover:text-red-700" (click)="clearEndDate()" [disabled]="isSaving">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">Description</label>
+      <textarea class="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200" [(ngModel)]="newCourse.description" name="description" rows="4" [disabled]="isSaving"></textarea>
+    </div>
+
+    <!-- Difficulty -->
+    <div>
+      <label class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">Difficulty</label>
+      <select class="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200" [(ngModel)]="newCourse.difficulty" name="difficulty" [disabled]="isSaving" required>
+        <option [value]="1">Easy</option>
+        <option [value]="2">Moderate</option>
+        <option [value]="3">Challenging</option>
+        <option [value]="4">Hard</option>
+        <option [value]="5">Very Difficult</option>
+      </select>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex space-x-4">
+      <button type="button" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600" (click)="saveCourse()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : 'Save Course' }}
+      </button>
+      @if (editingCourseId) {
+        <button type="button" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600" (click)="deleteCourse()" [disabled]="isSaving">Delete Course</button>
+      }
+      <button type="button" class="px-4 py-2 bg-neutral-300 dark:bg-neutral-600 text-neutral-800 dark:text-neutral-200 rounded-md hover:bg-neutral-400 dark:hover:bg-neutral-500" (click)="resetForm()" [disabled]="isSaving">Reset</button>
+    </div>
+  </form>
+</div>
+
+<!-- <div class="courses-crud mx-auto mt-8 max-w-3xl bg-neutral-400 p-8">
+  <h2 class="text-2xl font-bold mb-4">Cargar Curso</h2>
+  <select
+    [ngModel]="selectedCourseId"
+    (change)="loadCourse($event)"
+    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+    <option value="">Selecciona un curso</option>
+    @for (course of courses$ | async; track course.id) {
+      <option [value]="course.id">{{ course.title }}</option>
+    }
+  </select>
+
+  <h3 class="text-xl font-semibold mt-6 mb-4">{{ editingCourseId ? 'Editar Curso' : 'Crear Nuevo Curso' }}</h3>
+  <form (ngSubmit)="saveCourse()" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Nombre (opcional):</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newCourse.name"
+        name="name"
+      >
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Título:</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newCourse.title"
+        name="title"
+        required
+      >
+      @if (errorMessage) {
+        <p class="text-red-500 text-sm mt-1">{{ errorMessage }}</p>
+      }
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Profesor (opcional):</label>
+      <select
+        [(ngModel)]="newCourse.teacherId"
+        (change)="updateTeacherName($event)"
+        name="teacherId"
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        <option value="">Selecciona un profesor</option>
+        @for (teacher of teachers$ | async; track teacher.id) {
+          <option [value]="teacher.id">{{ teacher.name }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">
+        <input
+          type="checkbox"
+          [(ngModel)]="newCourse.enabled"
+          name="enabled"
+          class="mr-2"
+        >
+        Habilitado
+      </label>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Fecha de inicio (opcional):</label>
+        <input
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+          type="date"
+          [(ngModel)]="newCourse.startDate"
+          name="startDate"
+        >
+        <p class="text-sm text-gray-600 mt-1">Dejar en blanco si no aplica</p>
+      </div>
+      <button
+        type="button"
+        (click)="clearStartDate()"
+        class="mt-1 p-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+        title="Borrar fecha de inicio">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Fecha de fin (opcional):</label>
+        <input
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+          type="date"
+          [(ngModel)]="newCourse.endDate"
+          name="endDate"
+        >
+        <p class="text-sm text-gray-600 mt-1">Dejar en blanco si no aplica</p>
+      </div>
+      <button
+        type="button"
+        (click)="clearEndDate()"
+        class="mt-1 p-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+        title="Borrar fecha de fin">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Descripción (opcional):</label>
+      <textarea
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        [(ngModel)]="newCourse.description"
+        name="description"
+        rows="4"
+      ></textarea>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Dificultad:</label>
+      <input
+        type="range"
+        min="1"
+        max="5"
+        step="1"
+        [(ngModel)]="newCourse.difficulty"
+        name="difficulty"
+        class="mt-1 block w-full"
+      >
+      <p class="text-sm text-gray-600 mt-1">
+        Nivel: {{ getDifficultyLabel(newCourse.difficulty) }}
+      </p>
+    </div>
+
+    <div class="flex space-x-2">
+      <button
+        type="submit"
+        class="bg-green-500 text-white px-4 py-2 rounded-md">
+        {{ editingCourseId ? 'Actualizar Curso' : 'Crear Curso' }}
+      </button>
+      @if (editingCourseId) {
+        <button
+          type="button"
+          (click)="resetForm()"
+          class="bg-gray-500 text-white px-4 py-2 rounded-md">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="deleteCourse()"
+          class="bg-red-500 text-white px-4 py-2 rounded-md">
+          Eliminar Curso
+        </button>
+      }
+    </div>
+  </form>
+</div> -->

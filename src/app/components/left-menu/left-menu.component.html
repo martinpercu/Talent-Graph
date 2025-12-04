@@ -1,0 +1,29 @@
+<div appSwipeLeftClose>
+  <div class="h-[100vh] w-[260px] overflow-y-auto bg-neutral-150 dark:bg-neutral-900 border-r border-gray-200 dark:border-none">
+    <div class="flex flex-col gap-4 text-center pt-16 text-gray-900 dark:text-gray-300 text-base">
+
+      <div
+        (click)="selectAll()"
+        class="cursor-pointer mb-6 text-sm font-semibold text-center px-6 m-auto"
+        [ngClass]="{ 'underline scale-105': boldKey === null }">
+        {{ pagesService.defaultTitle() }}
+      </div>
+
+      @for (item of bookIndex() | keyvalue; track item.key) {
+        <div class="px-3 text-left py-1">
+          <div
+            class="text-xs font-semibold pb-1 px-2"
+            [ngClass]="{ 'underline': boldKey === item.key }">
+            {{ item.key }}:
+          </div>
+          <div
+            (click)="toggleBold(item.key, item.value)"
+            class="cursor-pointer text-sm hover:bg-neutral-200 hover:bg-opacity-40 py-1 px-2 rounded-lg"
+            [ngClass]="{ 'bg-neutral-200 dark:bg-neutral-700': boldKey === item.key }">
+            {{ item.value }}
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

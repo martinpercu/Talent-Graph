@@ -1,0 +1,101 @@
+<div class="max-w-md mx-auto w-full px-1 py-4">
+  <div class="text-center pb-4 text-lg font-normal underline">
+    - {{ "recruiter_auth.signin" | transloco }} -
+  </div>
+  <div class="text-center w-4/5 m-auto flex flex-col">
+    @if(errorMessage) {
+    <div class="flex flex-col text-red-600 mb-4">
+      {{ errorMessage }}
+    </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+      <div>
+        <input
+          class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-base rounded-md focus:border-neutral-400 px-3 py-2 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400 w-full"
+          type="text"
+          [placeholder]="'recruiter_auth.placeholder_username' | transloco"
+          formControlName="username"
+        />
+      </div>
+      <div>
+        <input
+          class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-base rounded-md focus:border-neutral-400 px-3 py-2 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400 w-full"
+          type="email"
+          [placeholder]="'recruiter_auth.placeholder_email' | transloco"
+          formControlName="email"
+        />
+      </div>
+      <div>
+        <input
+          class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-base rounded-md focus:border-neutral-400 px-3 py-2 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400 w-full"
+          type="password"
+          [placeholder]="'recruiter_auth.placeholder_password' | transloco"
+          formControlName="password"
+        />
+      </div>
+      <div class="text-xs text-left ml-2">
+        {{ "auth.continuing" | transloco }}
+        <span class="hover:underline cursor-pointer" (click)="toTerms()">{{ "auth.terms_coditions" | transloco }}</span>{{ "auth.and_our" | transloco }}
+        <span class="hover:underline cursor-pointer" (click)="toPrivacy()">{{ "auth.privacy" | transloco }}</span>
+      </div>
+      <div>
+        <button
+          class=" py-2 px-8 mt-2 text-base bg-black dark:bg-white text-white dark:text-black rounded-lg"
+          type="submit"
+        >
+          {{ "recruiter_auth.signin" | transloco }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- <div>
+<div class="text-center py-2 mt-1 text-lg font-normal underline">
+  - {{ "recruiter_auth.signin" | transloco }} -
+</div>
+<div class="text-center flex flex-col">
+  @if(errorMessage) {
+  <div class="flex flex-col text-red-600">
+    {{ errorMessage }}
+  </div>
+  }
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div>
+      <input
+        class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-md mb-2 focus:border-neutral-400 px-2.5 py-1 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400"
+        type="text"
+        [placeholder]="'recruiter_auth.placeholder_username' | transloco"
+        formControlName="username"
+      />
+    </div>
+    <div>
+      <input
+        class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-md mb-2 focus:border-neutral-400 px-2.5 py-1 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400"
+        type="text"
+        [placeholder]="'recruiter_auth.placeholder_email' | transloco"
+        formControlName="email"
+      />
+    </div>
+    <div>
+      <input
+        class="outline-none bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-md mb-2 focus:border-neutral-400 px-2.5 py-1 dark:text-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400"
+        type="password"
+        [placeholder]="'recruiter_auth.placeholder_password' | transloco"
+        formControlName="password"
+      />
+    </div>
+    <div>
+      <button
+        class="m-1 mb-4 py-2 px-6 text-base bg-black dark:bg-white text-white dark:text-black rounded-full"
+        type="submit"
+      >
+      {{ "recruiter_auth.signin" | transloco }}
+      </button>
+    </div>
+  </form>
+</div>
+</div> -->
+
+

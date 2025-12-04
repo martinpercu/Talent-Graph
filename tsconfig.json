@@ -1,0 +1,43 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist/out-tsc",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "bundler",
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "paths":{
+      "@models/*": ["./src/app/models/*"],
+      "@services/*": ["./src/app/services/*"],
+      "@directives/*": ["./src/app/directives/*"],
+      "@pages/*": ["./src/app/pages/*"],
+      "@components/*": ["./src/app/components/*"],
+      "@superadmin/*": ["./src/app/components/superadmin/*"],
+      "@school/*": ["./src/app/components/school/*"],
+      "@evaluation/*": ["./src/app/components/evaluation/*"],
+      "@env/*": ["./src/environments/*"],
+      "@pipes/*": ["./src/app/pipes/*"],
+      "@shared/*": ["./src/app/shared/*"],
+      "@recruiter/*": ["./src/app/components/recruiter/*"],
+      "@candidate/*": ["./src/app/components/candidate/*"],
+      "@auth/*": ["./src/app/components/auth/*"],
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}

@@ -1,0 +1,340 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-2 sm:p-8"
+  (click)="close()"
+>
+  <div
+    class="max-w-4xl w-full max-h-[98dvh] overflow-y-auto bg-white dark:bg-neutral-800 rounded-lg shadow-lg relative flex flex-col"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- <div
+      class="sticky top-0 z-10 bg-white dark:bg-neutral-800 w-full flex p-2"
+      (click)="close()"
+    > -->
+    <div class="sticky top-0 z-10 bg-white dark:bg-neutral-800 w-full flex flex-row p-2">
+      <div (click)="close()">
+        <mat-icon class="cursor-pointer text-neutral-600 dark:text-neutral-300">cancel</mat-icon>
+      </div>
+      <div class="grow"></div>
+      <div>
+        @if(resumeForJob.thumbUp){
+
+          <div  (click)="thumbUpHandleResume(false)"
+          class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+            {{ "recruiter.unhighlight" | transloco }}
+            <mat-icon class="ml-2 cursor-pointer text-neutral-600 dark:text-neutral-300">
+              thumb_down
+            </mat-icon>
+          </div>
+        }@else {
+          <div (click)="thumbUpHandleResume(true)"
+          class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+            <mat-icon class="mr-2 cursor-pointer text-neutral-600 dark:text-neutral-300">
+              thumb_up
+            </mat-icon>
+            {{ "recruiter.highlight" | transloco }}
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="p-4 pt-0 flex-1 overflow-y-auto">
+      <div class="flex items-center space-x-2">
+        <!-- <mat-icon class="text-neutral-600 dark:text-neutral-300">person</mat-icon> -->
+        <h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100 flex truncate overflow-hidden whitespace-nowrap">
+          {{ resumeForJob.name }}
+        </h2>
+
+        <!-- <div class="flex-grow"></div> -->
+        @if(resumeForJob.thumbUp){
+
+          <!-- <div  (click)="thumbUpHandleResume(false)"
+          class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+            Quitar de Destacados
+          </div> -->
+          <div class="rounded-full px-2 py-1 text-sm font-bold bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-200 flex justify-center items-center">
+            <mat-icon class="text-neutral-600 dark:text-neutral-300">
+                thumb_up
+            </mat-icon>
+          </div>
+        }@else {
+          <!-- <div (click)="thumbUpHandleResume(true)"
+          class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+            Me gusta este CV
+            <mat-icon class="cursor-pointer text-neutral-600 dark:text-neutral-300">
+                thumb_up
+            </mat-icon>
+          </div> -->
+        }
+
+        <div class="flex-grow"></div>
+        <!-- @if(resumeForJob.thumbUp){
+
+          <div  (click)="thumbUpHandleResume(false)"
+          class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+            Quitar de Destacados
+            <mat-icon class="ml-2 cursor-pointer text-neutral-600 dark:text-neutral-300">
+              thumb_down
+            </mat-icon>
+          </div>
+
+        } -->
+
+
+        <!-- @if(resumeForJob.scoreToPosition){
+          <div class="rounded-full px-3 py-1 text-sm font-bold bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-200">
+            Score: {{ resumeForJob.scoreToPosition / 10 | number: '1.1-1' }}%
+          </div>
+          <div class="rounded-full px-3 py-1 text-sm font-bold border border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+            Score: {{ resumeForJob.scoreToPosition / 10 | number: '1.1-1' }}%
+          </div>
+        } -->
+
+
+        <!-- @if(resumeForJob.scoreToPosition && resumeForJob.thumbUp ){
+          <div class="rounded-full px-3 py-1 text-sm font-bold border border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+            Score: {{ resumeForJob.scoreToPosition / 10 | number: '1.1-1' }}%
+          </div>
+        } -->
+
+      </div>
+
+  <div class="mt-4 border-t pt-4 border-neutral-200 dark:border-neutral-700">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-neutral-600 dark:text-neutral-400">
+      @if (resumeForJob.email) {
+      <div class="flex items-center space-x-2">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">mail</mat-icon>
+        <span>{{ resumeForJob.email }}</span>
+        <div (click)="emailToCandidate()"
+          class="flex items-center cursor-pointer py-1 px-1 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+          <mat-icon>forward_to_inbox</mat-icon> <div class="pl-2 pr-1">email</div>
+        </div>
+      </div>
+      }
+      @if (resumeForJob.phone) {
+      <div class="flex items-center space-x-2">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">phone</mat-icon>
+        <span>{{ resumeForJob.phone }}</span>
+        <div (click)="smsToCandidate()"
+          class="flex items-center cursor-pointer py-1 px-1 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+          <mat-icon>sms</mat-icon> <div class="pl-2 pr-1">sms</div>
+        </div>
+        <div (click)="callToCandidate()"
+          class="flex items-center cursor-pointer py-1 px-1 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+          <mat-icon>phone_forwarded</mat-icon> <div class="pl-2 pr-1">call</div>
+        </div>
+      </div>
+      }
+      @if (resumeForJob.city) {
+      <div class="flex items-center space-x-2">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">location_city</mat-icon>
+        <span>{{ resumeForJob.city }}</span>
+      </div>
+      }
+      @if (resumeForJob.zipcode) {
+      <div class="flex items-center space-x-2">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">location_on</mat-icon>
+        <span>{{ resumeForJob.zipcode }}</span>
+      </div>
+      }
+    </div>
+
+    <!-- @if(resumeForJob.summary && resumeForJob.summary.length > 0) {
+      <div
+        class="mt-4 flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+        (click)="toggleSection('summary')"
+      >
+        <div class="flex">
+          <mat-icon class="text-neutral-600 dark:text-neutral-300">description</mat-icon>
+        </div>
+        <div class="flex pl-2">Summary</div>
+        <div class="flex pl-2 ml-auto">
+          @if(!showSummary) {
+          <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_down</mat-icon>
+          } @else {
+          <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_up</mat-icon>
+          }
+        </div>
+      </div>
+      @if(showSummary) {
+        <div class="mt-2 p-2 text-neutral-600 dark:text-neutral-400">
+          {{ resumeForJob.summary }}
+        </div>
+      }
+    } -->
+  </div>
+
+  @if(resumeForJob.summary && resumeForJob.summary.length > 0) {
+    <div
+      class="mt-4 flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="toggleSection('summary')"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">description</mat-icon>
+      </div>
+      <div class="flex pl-2">{{ "candidate_resume.summary_title" | transloco }}</div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showSummary) {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_down</mat-icon>
+        } @else {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_up</mat-icon>
+        }
+      </div>
+    </div>
+    @if(showSummary) {
+      <div class="mt-2 p-2 text-neutral-600 dark:text-neutral-400">
+        {{ resumeForJob.summary }}
+      </div>
+    }
+  }
+
+  @if(resumeForJob.works && resumeForJob.works.length > 0) {
+    <div
+      class="mt-4 flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="toggleSection('works')"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">work</mat-icon>
+      </div>
+      <div class="flex pl-2">{{ "candidate_resume.work_experience" | transloco }} ({{ resumeForJob.works.length }})</div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showWorks) {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_down</mat-icon>
+        } @else {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_up</mat-icon>
+        }
+      </div>
+    </div>
+    @if(showWorks) {
+      <div class="mt-2 p-2 space-y-4">
+        @for(work of resumeForJob.works; track $index) {
+          <div class="border-l-2 pl-4 border-neutral-300 dark:border-neutral-600">
+            <h4 class="font-semibold text-neutral-900 dark:text-neutral-100">{{ work.jobtitle }}</h4>
+            <p class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ work.company }} - {{ work.dates }}</p>
+            <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-1">{{ work.description }}</p>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  @if(resumeForJob.skills && resumeForJob.skills.length > 0) {
+    <div
+      class="mt-4 flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="toggleSection('skills')"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">psychology</mat-icon>
+      </div>
+      <div class="flex pl-2">{{ "candidate_resume.skills" | transloco }}</div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showSkills) {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_down</mat-icon>
+        } @else {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_up</mat-icon>
+        }
+      </div>
+    </div>
+    @if(showSkills) {
+      <div class="mt-2 p-2 flex flex-wrap text-neutral-600 dark:text-neutral-400">
+          {{ resumeForJob.skills }}
+        <!-- @for(skill of resumeForJob.skills; track $index) {
+          <div class="bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-1 rounded-full text-sm">
+            {{ skill }}
+          </div>
+        } -->
+      </div>
+    }
+  }
+
+  @if(resumeForJob.education && resumeForJob.education.length > 0) {
+    <div
+      class="mt-4 flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="toggleSection('education')"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">school</mat-icon>
+      </div>
+      <div class="flex pl-2">{{ "candidate_resume.education" | transloco }} ({{ resumeForJob.education.length }})</div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showEducation) {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_down</mat-icon>
+        } @else {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_up</mat-icon>
+        }
+      </div>
+    </div>
+    @if(showEducation) {
+      <div class="mt-2 p-2 space-y-4">
+        @for(edu of resumeForJob.education; track $index) {
+          <div class="border-l-2 pl-4 border-neutral-300 dark:border-neutral-600">
+            <h4 class="font-semibold text-neutral-900 dark:text-neutral-100">{{ edu.degree }}</h4>
+            <p class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ edu.institution }} - {{ edu.graduationYear }}</p>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  @if(resumeForJob.certifications && resumeForJob.certifications.length > 0) {
+    <div
+      class="mt-4 flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="toggleSection('certifications')"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">verified</mat-icon>
+      </div>
+      <div class="flex pl-2">{{ "candidate_resume.certifications" | transloco }} ({{ resumeForJob.certifications.length }})</div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showCertifications) {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_down</mat-icon>
+        } @else {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_up</mat-icon>
+        }
+      </div>
+    </div>
+    @if(showCertifications) {
+      <div class="mt-2 p-2 space-y-4">
+        @for(cert of resumeForJob.certifications; track $index) {
+          <div class="border-l-2 pl-4 border-neutral-300 dark:border-neutral-600">
+            <h4 class="font-semibold text-neutral-900 dark:text-neutral-100">{{ cert.certificate }}</h4>
+            <p class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ cert.issuingOrganization }} - {{ cert.year }}</p>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  @if(resumeForJob.languages && resumeForJob.languages.length > 0) {
+    <div
+      class="mt-4 flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+      (click)="toggleSection('languages')"
+    >
+      <div class="flex">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">language</mat-icon>
+      </div>
+      <div class="flex pl-2">{{ "candidate_resume.languages" | transloco }}</div>
+      <div class="flex pl-2 ml-auto">
+        @if(!showLanguages) {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_down</mat-icon>
+        } @else {
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">expand_circle_up</mat-icon>
+        }
+      </div>
+    </div>
+    @if(showLanguages) {
+      <div class="mt-2 p-2 flex flex-wrap text-neutral-600 dark:text-neutral-400">
+          {{ resumeForJob.languages }}
+        <!-- @for(skill of resumeForJob.skills; track $index) {
+          <div class="bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-1 rounded-full text-sm">
+            {{ skill }}
+          </div>
+        } -->
+      </div>
+    }
+  }
+
+</div>
+
+</div>
+
+</div>

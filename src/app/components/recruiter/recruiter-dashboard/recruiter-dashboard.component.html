@@ -1,0 +1,685 @@
+@if(recruiterService.recruiterSig(); as theRecruiter){
+
+<div (click)="visualStatesService.handleMenuTopRightShow()" class="z-10 absolute right-0 top-0 p-2 sm:pr-4 flex flex-col items-end">
+    <button
+      class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-xl border border-gray-200 dark:border-neutral-700"
+    >
+      <span class="hidden sm:block">{{
+        "recruiter.menu" | transloco
+      }}</span>
+      <mat-icon class="">menu_open</mat-icon>
+    </button>
+  @if(this.visualStatesService.showMenuTopRight()) {
+    <div class="flex bg-transparent w-[100vw] h-[92vh]">
+      <div class="grow"></div>
+      <div class="flex flex-col">
+        <div class="mt-2 shadow-md rounded-xl" (click)="$event.stopPropagation()">
+          <app-menu-settings></app-menu-settings>
+        </div>
+        <div class="grow"></div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- <div class="z-10 absolute right-0 top-0 p-2">
+  <div class="z-20">
+    <button
+      (click)="switchExpand()"
+      class="flex items-center gap-2 px-4 py-2 bg-transparent dark:bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-xl border border-gray-200 dark:border-neutral-700"
+    >
+      <span class="hidden sm:block">{{
+        "recruiter.menu" | transloco
+      }}</span>
+      <mat-icon class="">menu_open</mat-icon>
+    </button>
+  </div>
+
+  @if(this.showSettingMenu) {
+    <div class="mt-2 shadow-md rounded-xl absolute right-2">
+      <app-menu-settings></app-menu-settings>
+    </div>
+  }
+</div> -->
+
+<div class="flex flex-col sm:flex-row h-[100dvh] bg-white dark:bg-neutral-850">
+  <!-- Sidebar -->
+  <div
+    class="hidden sm:flex sm:flex-col font-light bg-neutral-50 dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700 p-0 pt-4 sm:p-4 gap-2"
+  >
+    <!-- <div class="mt-2 mb-6">
+      <button
+        (click)="goToMain()"
+        class="flex items-center gap-2 px-4 py-2 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 bg-white dark:bg-neutral-700 shadow-md rounded-md"
+      >
+        <mat-icon class="">settings</mat-icon>
+        <span>Settings</span>
+      </button>
+    </div> -->
+    <!-- <button (click)="setView('teachers')"
+      class="flex items-center gap-2 px-4 py-2 rounded-3xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+      [ngClass]="{'bg-neutral-100 dark:bg-neutral-800': currentView === 'teachers'}">
+      <mat-icon>smart_toy</mat-icon>
+      <span>Teachers</span>
+    </button> -->
+    <!-- <button (click)="setView('courses')"
+      class="flex items-center gap-2 px-4 py-2 rounded-3xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+      [ngClass]="{'bg-neutral-100 dark:bg-neutral-800': currentView === 'courses'}">
+      <mat-icon>school</mat-icon>
+      <span>Courses</span>
+    </button> -->
+    @if(this.jobs.length >= 1){
+    <button
+      (click)="setView('jobs')"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold shadow-sm shadow-neutral-300':
+          currentView === 'jobs'
+      }"
+    >
+      <mat-icon>article_person</mat-icon>
+      <span
+        class="hidden sm:block"
+        [ngClass]="{
+          'pl-1': currentView === 'jobs'
+        }"
+        >{{ "recruiter.candidates" | transloco }}</span
+      >
+    </button>
+    }
+    @if(this.results.length >= 1){
+    <button
+      (click)="setView('results')"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold shadow-sm shadow-neutral-300':
+          currentView === 'results'
+      }"
+    >
+      <mat-icon>checklist</mat-icon>
+      <span
+        class="hidden sm:block"
+        [ngClass]="{
+          'pl-1': currentView === 'results'
+        }"
+        >{{ "recruiter.results_all" | transloco }}</span
+      >
+    </button>
+    }
+    <button
+      (click)="setView('jobs_edit')"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-bold shadow-sm shadow-neutral-300':
+          currentView === 'jobs_edit'
+      }"
+    >
+      <mat-icon>works</mat-icon>
+      <span
+        class="hidden sm:block"
+        [ngClass]="{
+          'pl-1': currentView === 'jobs_edit'
+        }"
+        >{{ "recruiter.posts_edit" | transloco }}</span
+      >
+    </button>
+
+    @if(allowedExamsShow && recruiterService.recruiterSig()?.useExams){
+    <!-- @if(true){ -->
+    <button
+      (click)="setView('exams')"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold shadow-sm shadow-neutral-300':
+          currentView === 'exams'
+      }"
+    >
+      <mat-icon>school</mat-icon>
+      <span
+        class="hidden sm:block"
+        [ngClass]="{
+          'pl-1': currentView === 'exams'
+        }"
+        >{{ "recruiter.exams_edit" | transloco }}</span
+      >
+    </button>
+    }
+
+    @if(candidates.length >=600){
+    <button
+      (click)="setView('candidates')"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold shadow-sm shadow-neutral-300':
+          currentView === 'candidates'
+      }"
+    >
+      <mat-icon>group</mat-icon>
+      <span
+        class="hidden sm:block"
+        [ngClass]="{
+          'pl-1': currentView === 'candidates'
+        }"
+        >{{ "recruiter.candidates" | transloco }}</span
+      >
+    </button>
+    }
+
+    @if(recruiterService.recruiterSig()?.useManager){
+    <button
+      (click)="setView('own_resumes')"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold shadow-sm shadow-neutral-300':
+          currentView === 'own_resumes'
+      }"
+    >
+      <mat-icon>person_play</mat-icon>
+      <span
+        class="hidden sm:block"
+        [ngClass]="{
+          'pl-1': currentView === 'own_resumes'
+        }"
+        >{{ "recruiter.manager" | transloco }}</span
+      >
+    </button>
+    }
+
+    @if (theRecruiter.subscriptionLevel >= 4){
+    @if(recruiterService.recruiterSig()?.useAgentsAI){
+    <button
+      (click)="setView('agent_chat')"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold shadow-sm shadow-neutral-300':
+          currentView === 'agent_chat'
+      }"
+    >
+      <mat-icon>smart_toy</mat-icon>
+      <span
+        class="hidden sm:block"
+        [ngClass]="{
+          'pl-1': currentView === 'agent_chat'
+        }"
+        >{{ "recruiter.ai_agent" | transloco }}</span
+      >
+    </button>
+    }
+    }
+
+
+    <button
+      (click)="setView('admin_agent')"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold shadow-sm shadow-neutral-300':
+          currentView === 'admin_agent'
+      }"
+    >
+      <mat-icon>manage_accounts</mat-icon>
+      <span
+        class="hidden sm:block"
+        [ngClass]="{
+          'pl-1': currentView === 'admin_agent'
+        }"
+        >ADMIN-AGENT</span
+      >
+    </button>
+
+
+
+
+    <!-- <button (click)="setView('students')"
+      class="flex items-center gap-2 px-4 py-2 rounded-3xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+      [ngClass]="{'bg-neutral-100 dark:bg-neutral-800': currentView === 'students'}">
+      <mat-icon>group</mat-icon>
+      <span>Students</span>
+    </button>
+    <button (click)="setView('results')"
+      class="flex items-center gap-2 px-4 py-2 rounded-3xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+      [ngClass]="{'bg-neutral-100 dark:bg-neutral-800': currentView === 'results'}">
+      <mat-icon>checklist</mat-icon>
+      <span>Exams Results</span>
+    </button>
+    <button (click)="setView('config')"
+      class="flex items-center gap-2 px-4 py-2 rounded-3xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+      [ngClass]="{'bg-neutral-100 dark:bg-neutral-800': currentView === 'config'}">
+      <mat-icon>settings</mat-icon>
+      <span>Config</span>
+    </button> -->
+
+    <!-- <div class="mt-8">
+      <button
+        (click)="goToMain()"
+        class="flex items-center gap-2 px-4 py-2 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 bg-white dark:bg-neutral-700 shadow-md rounded-md"
+      >
+        <mat-icon class="">expand_circle_down</mat-icon>
+        <span>Abrir Menu</span>
+      </button>
+    </div> -->
+
+    <!-- <div>
+      @if(!this.showSettingMenu) {
+      <div class="mt-20">
+        <button
+          (click)="switchExpand()"
+          class="flex items-center gap-2 px-4 py-2 bg-transparent dark:bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-xl border border-gray-200 dark:border-neutral-700"
+        >
+          <mat-icon class="">expand_circle_down</mat-icon>
+          <span class="hidden sm:block">{{
+            "recruiter.open_menu" | transloco
+          }}</span>
+        </button>
+      </div>
+      } @else {
+      <div class="mt-20">
+        <button
+          (click)="switchExpand()"
+          class="flex items-center gap-2 px-4 py-2 bg-transparent dark:bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-xl border border-gray-200 dark:border-neutral-700"
+        >
+          <mat-icon class="">expand_circle_up</mat-icon>
+          <span class="hidden sm:block">{{
+            "recruiter.close_menu" | transloco
+          }}</span>
+        </button>
+      </div>
+      <div>
+        <app-menu-settings></app-menu-settings>
+      </div>
+      }
+    </div> -->
+
+
+  </div>
+
+  <!-- END SIDE MENU -->
+  <!-- START ALL CONTENT -->
+
+  @if (currentView !== "agent_chat") {
+  <div class="flex-1 px-2 py-4 sm:p-4 overflow-auto">
+    @if (currentView === 'jobs') {
+    <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+      {{ "recruiter.profils_in_posts" | transloco }}
+    </h1>
+    <div class="mb-14">
+      @for (job of jobsOrderedByCandidates; track job.jobId) {
+      <app-jobs-list
+        [job]="job"
+        [candidatesForJob]="getCandidatesForJob(job.jobId)"
+        [candidatesForJobAndExamPassed]="getApprovedCandidatesForJob(job.jobId)"
+        [resumesForJob]="getResumesForJob(job.jobId)"
+        [examForJob]="getExamForJob(job.examId)"
+      >
+      </app-jobs-list>
+      }
+    </div>
+    }
+
+    @if (currentView === 'jobs_edit') {
+    <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+      {{ "recruiter.posts_edit" | transloco }}
+    </h1>
+    <div class="mb-14">
+    <app-jobs-crud></app-jobs-crud>
+    </div>
+    }
+
+    @if (currentView === 'exams') {
+    <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+      {{ "recruiter.exams_edit" | transloco }}
+    </h1>
+    <div class="mb-14">
+    <app-exam-crud></app-exam-crud>
+    </div>
+    }
+
+    @if (currentView === 'candidates') {
+    <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+      {{ "recruiter.candidates" | transloco }}
+    </h1>
+    <div class="mb-14">
+      @for (candidate of candidates; track candidate.candidateUID) {
+      <app-candidates-list
+        [candidate]="candidate"
+        [results]="getResultsForCandidate(candidate.candidateUID)"
+      >
+      </app-candidates-list>
+      <!-- <app-exam-result-list></app-exam-result-list> -->
+      }
+    </div>
+    }
+
+    @if (currentView === 'results') {
+    <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+      Exams Results
+    </h1>
+    <div class="mb-14">
+      <!-- @for (result of results; track result.id) {
+      <app-exam-result-list [result]="result"></app-exam-result-list>
+      } -->
+     @for (candidate of candidates; track candidate.candidateUID) {
+        @if (getRecruiterSpecificResultsForCandidate(candidate.candidateUID).length > 0) {
+          <div class="mb-6 p-4 border rounded-lg shadow-sm bg-white dark:bg-gray-800">
+            <h2 class="text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              Candidate: {{ candidate.username }}
+              </h2>
+            @for (result of getRecruiterSpecificResultsForCandidate(candidate.candidateUID); track result.id) {
+              <app-exam-result-list [result]="result"></app-exam-result-list>
+            }
+          </div>
+        } @else {
+          <div class="mb-4 p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+            Candidate: {{ candidate.username }} - No relevant exam results found for exams created by you.
+          </div>
+        }
+      }
+      @if (candidates.length === 0) {
+        <p class="text-gray-500 dark:text-gray-400">No candidates found for this recruiter.</p>
+      }
+    </div>
+    }
+
+    @if (currentView === 'own_resumes') {
+    <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+      {{ "recruiter.own_resumes_title" | transloco }}
+    </h1>
+    <div class="mb-14">
+      <app-own-resumes
+      [recruiterId]="recruiterService.recruiterSig()?.recruiterUID"
+      >
+      </app-own-resumes>
+    </div>
+    }
+
+    @if (currentView === 'config') {
+    <h1 class="text-2xl font-bold text-neutral-800 dark:text-neutral-200 mb-4">
+      Configuration
+    </h1>
+    <p class="text-neutral-600 dark:text-neutral-400">
+      Configuration settings coming soon.
+    </p>
+    }
+
+    <!-- @if (currentView === 'candidates') {
+    <h1 class="text-2xl font-bold text-neutral-800 dark:text-neutral-200 mb-4">
+      Students
+    </h1>
+    @for (userWithResults of usersWithResults; track
+    userWithResults.user.userUID) {
+    <app-student-list
+      [user]="userWithResults.user"
+      [results]="userWithResults.results"
+    ></app-student-list>
+    } } -->
+
+    <!-- @if (currentView === 'candidates') {
+    <h1 class="text-2xl font-bold text-neutral-800 dark:text-neutral-200 mb-4">
+      Students
+    </h1>
+    @for (userWithResults of usersWithResults; track
+    userWithResults.user.userUID) {
+    <app-student-list
+      [user]="userWithResults.user"
+      [results]="userWithResults.results"
+    ></app-student-list>
+    } } -->
+
+
+  @if (currentView === "admin_agent") {
+  <div class="flex-1 overflow-auto">
+    <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+      Admin-AGENTES
+    </h1>
+    <div class="">
+      <app-admin-agent></app-admin-agent>
+    </div>
+  </div>
+  }  
+
+
+
+  </div>
+
+  }
+
+
+
+  @if (currentView === "agent_chat") {
+  <div class="flex-1 overflow-auto">
+    <!-- <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+      {{ "recruiter.ai_agent" | transloco }}
+    </h1> -->
+    <div class="">
+      <app-agent-chat
+      >
+      </app-agent-chat>
+    </div>
+  </div>
+  }
+
+
+
+
+  <!-- END ALL CONTENT -->
+
+  <!-- MOBILE ==> Footer -->
+  <div
+    class="fixed bottom-0 left-0 right-0 sm:hidden font-light bg-neutral-50 dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-700 px-2 py-2 flex gap-1"
+  >
+
+  <!-- <button
+      (click)="setView('jobs')"
+      class="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold':
+          currentView === 'jobs'
+      }"
+    >
+      <mat-icon class="!text-xl">article_person</mat-icon>
+      <span class="text-xs hidden xs:block">{{ "recruiter.posts" | transloco }}</span>
+    </button>
+    <button
+      (click)="setView('candidates')"
+      class="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold':
+          currentView === 'candidates'
+      }"
+    >
+      <mat-icon class="!text-xl">group</mat-icon>
+      <span class="text-xs hidden xs:block">{{ "recruiter.candidates" | transloco }}</span>
+    </button> -->
+
+
+
+  @if(this.jobs.length >= 1){
+    <button
+      (click)="setView('jobs')"
+      class="flex-1 flex flex-col items-center text-neutral-600 dark:text-neutral-400"
+    >
+      <mat-icon
+        [ngClass]="{
+        'scale-125 text-black dark:text-white':
+          currentView === 'jobs'
+        }">
+        article_person
+      </mat-icon>
+      <span
+        class="text-xs"
+        [ngClass]="{
+          'font-semibold text-black dark:text-white scale-110': currentView === 'jobs'
+        }"
+        >{{ "recruiter.candidates" | transloco }}</span
+      >
+    </button>
+    }
+  @if(this.results.length >= 1){
+    <button
+      (click)="setView('results')"
+      class="flex-1 flex flex-col items-center text-neutral-600 dark:text-neutral-400"
+    >
+      <mat-icon
+        [ngClass]="{
+        'scale-125 text-black dark:text-white':
+          currentView === 'results'
+        }">
+        checklist
+      </mat-icon>
+      <span
+        class="text-xs"
+        [ngClass]="{
+          'font-semibold text-black dark:text-white scale-110': currentView === 'results'
+        }"
+        >{{ "recruiter.results_all" | transloco }}</span
+      >
+    </button>
+    }
+    <button
+      (click)="setView('jobs_edit')"
+      class="flex-1 flex flex-col items-center text-neutral-600 dark:text-neutral-400"
+    >
+      <mat-icon
+        [ngClass]="{
+        'scale-125 text-black dark:text-white':
+          currentView === 'jobs_edit'
+      }">
+        works
+      </mat-icon>
+      <span
+        class="text-xs"
+        [ngClass]="{
+          'font-semibold text-black dark:text-white scale-110': currentView === 'jobs_edit'
+        }"
+        >{{ "recruiter.posts_edit" | transloco }}</span
+      >
+    </button>
+
+    @if(allowedExamsShow && recruiterService.recruiterSig()?.useExams){
+      <button
+        (click)="setView('exams')"
+        class="flex-1 flex flex-col items-center text-neutral-600 dark:text-neutral-400"
+      >
+        <mat-icon
+          [ngClass]="{
+          'scale-125 text-black dark:text-white':
+            currentView === 'exams'
+        }">school
+        </mat-icon>
+        <span
+          class="text-xs"
+          [ngClass]="{
+            'font-semibold text-black dark:text-white scale-110': currentView === 'exams'
+          }"
+          >{{ "recruiter.exams_edit" | transloco }}</span
+        >
+    </button>
+    }
+
+    @if(candidates.length >=600){
+      <button
+        (click)="setView('candidates')"
+        class="flex-1 flex flex-col items-center text-neutral-600 dark:text-neutral-400"
+      >
+        <mat-icon
+          [ngClass]="{
+          'scale-125 text-black dark:text-white':
+            currentView === 'candidates'
+        }">
+        group
+        </mat-icon>
+        <span
+          class="text-xs"
+          [ngClass]="{
+            'font-semibold text-black dark:text-white scale-110': currentView === 'candidates'
+          }"
+          >{{ "recruiter.candidates" | transloco }}</span
+        >
+      </button>
+    }
+
+    @if(allowedExamsShow && recruiterService.recruiterSig()?.useManager){
+    <button
+      (click)="setView('own_resumes')"
+      class="flex-1 flex flex-col items-center text-neutral-600 dark:text-neutral-400"
+    >
+      <mat-icon
+        [ngClass]="{
+        'scale-125 text-black dark:text-white':
+          currentView === 'own_resumes'
+      }">
+        person_play
+      </mat-icon>
+      <span
+        class="text-xs"
+        [ngClass]="{
+          'font-semibold text-black dark:text-white scale-110': currentView === 'own_resumes'
+        }"
+        >{{ "recruiter.manager" | transloco }}</span
+      >
+    </button>
+    }
+
+    @if (theRecruiter.subscriptionLevel >= 4){
+    @if(allowedExamsShow && recruiterService.recruiterSig()?.useAgentsAI){
+    <button
+      (click)="setView('agent_chat')"
+      class="flex-1 flex flex-col items-center text-neutral-600 dark:text-neutral-400"
+    >
+      <mat-icon
+        [ngClass]="{
+        'scale-125 text-black dark:text-white':
+          currentView === 'agent_chat'
+      }">
+        smart_toy
+      </mat-icon>
+      <span
+        class="text-xs"
+        [ngClass]="{
+          'font-semibold text-black dark:text-white scale-110': currentView === 'agent_chat'
+        }"
+        >{{ "recruiter.ai_agent" | transloco }}</span
+      >
+    </button>
+    }
+    }
+
+
+
+
+    <!-- <button
+      (click)="setView('jobs')"
+      class="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold':
+          currentView === 'jobs'
+      }"
+    >
+      <mat-icon class="!text-xl">article_person</mat-icon>
+      <span class="text-xs hidden xs:block">{{ "recruiter.posts" | transloco }}</span>
+    </button>
+    <button
+      (click)="setView('candidates')"
+      class="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-700"
+      [ngClass]="{
+        'bg-neutral-100 dark:bg-neutral-800 font-semibold':
+          currentView === 'candidates'
+      }"
+    >
+      <mat-icon class="!text-xl">group</mat-icon>
+      <span class="text-xs hidden xs:block">{{ "recruiter.candidates" | transloco }}</span>
+    </button> -->
+  </div>
+
+</div>
+@if(this.visualStatesService.showRecruiterAccountEdit()){
+<app-recruiter-account></app-recruiter-account>
+}
+}
+
+
+<!-- @else{
+<div class="fixed inset-0 flex justify-center z-50 shadow-2xl rounded-xl">
+  <app-menu-settings></app-menu-settings>
+  <app-login-and-register></app-login-and-register>
+</div>
+} -->

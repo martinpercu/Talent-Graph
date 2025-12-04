@@ -1,0 +1,183 @@
+<div class="bg-white dark:bg-neutral-850 relative h-[100dvh] w-full overflow-auto transition-width">
+
+  <div class="flex h-full w-full flex-col focus-visible:outline-0">
+
+    <div class="w-full flex flex-row h-[60px] shadow-sm pb-1 dark:border-b border-neutral-700">
+
+      <div (click)="toggleShowLeftMenuHeader()"
+        class="fixed cursor-pointer scale-125 left-4 top-3 flex items-center text-neutral-600 dark:text-neutral-200 z-50 rounded-lg p-1">
+
+        @if(this.visualStatesService.leftMenuCondition()) {
+        <div class="md:hidden h-6">
+          <mat-icon>left_panel_close</mat-icon>
+        </div>
+        <div class="hidden md:block h-6">
+          <mat-icon>left_panel_open</mat-icon>
+        </div>
+        }
+        @if(!this.visualStatesService.leftMenuCondition()) {
+        <div class="md:hidden h-6">
+          <mat-icon>left_panel_open</mat-icon>
+        </div>
+        <div class="hidden md:block h-6">
+          <mat-icon>left_panel_close</mat-icon>
+          <!-- <mat-icon fontIcon="menu" class="scale-125 text-neutral-800 dark:text-white cursor-pointer"></mat-icon> -->
+        </div>
+        }
+
+      </div>
+
+      <div class="w-3/5 m-auto text-base text-center text-neutral-600 dark:text-neutral-200">
+        {{this.pagesService.titleSelected()}}
+      </div>
+
+      <div class="">
+        <!-- <app-top-right (showModalHandler)="fromTopRight($event)"></app-top-right> -->
+        <app-top-right></app-top-right>
+      </div>
+    </div>
+
+
+    <div class="grow p-1 flex flex-col">
+
+      <div #messagesContainer class="grow h-16 m-auto w-full overflow-y-auto px-3 scroll-smooth">
+        <div class="flex flex-col sm:w-12/12 md:w-11/12 lg:w-[640px] xl:w-[768px] m-auto"
+          *ngFor="let message of chatMessages">
+
+          <div
+            class="self-end max-w-[80%] rounded-3xl rounded-br-md text-neutral-800 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-750 mt-3 mb-4 py-2 px-4 break-words whitespace-pre-wrap"
+            [ngClass]="{ 'assistant-message': message.role === 'assistant',  'user-message': message.role === 'user' }">
+            <div class="text-gray-800 dark:text-gray-200">{{ message.message }}</div>
+
+            <div>{{ message.content }}</div>
+          </div>
+
+        </div>
+
+        @if(loadingResponse && !startingResponse){
+        <div class="relative top-[-14px] sm:w-11/12 md:w-10/12 lg:w-9/12 xl:w-8/122 xl:w-1/2 m-auto">
+          <app-message-waiting></app-message-waiting>
+        </div>
+        }
+      </div>
+
+
+
+      <div [ngClass]="showArrowDown ? 'arrow-show' : 'arrow-not-show'" class="relative">
+        <div (click)="scrollToBottomFromArrow()"
+          class="cursor-pointer absolute bottom-1.5 right-1/2 rounded-full bg-amber-100 border w-8 h-8 flex items-center justify-center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+            class="icon-md text-token-text-primary">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M12 21C11.7348 21 11.4804 20.8946 11.2929 20.7071L4.29289 13.7071C3.90237 13.3166 3.90237 12.6834 4.29289 12.2929C4.68342 11.9024 5.31658 11.9024 5.70711 12.2929L11 17.5858V4C11 3.44772 11.4477 3 12 3C12.5523 3 13 3.44772 13 4V17.5858L18.2929 12.2929C18.6834 11.9024 19.3166 11.9024 19.7071 12.2929C20.0976 12.6834 20.0976 13.3166 19.7071 13.7071L12.7071 20.7071C12.5196 20.8946 12.2652 21 12 21Z"
+              fill="currentColor"></path>
+          </svg>
+        </div>
+      </div>
+
+
+      <div
+        class="flex flex-col w-11/12 sm:w-11/12 md:w-11/12 lg:w-[640px] xl:w-[768px] p-3 mt-4 mb-6 gap-2 m-auto bg-white dark:bg-neutral-750 rounded-3xl shadow-sm sm:shadow-lg dark:shadow-none! border border-neutral-200 dark:border-none">
+
+        <div class="flex flex-row">
+
+          <div class="grow">
+            <textarea #chatInput [(ngModel)]="userMessage"
+              class="w-full text-gray-800 dark:text-gray-200 py-1 px-3 ring-0 bg-transparent resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-none appearance-none dark:placeholder-neutral-400"
+              rows="1" placeholder="Ask me here — I’ll help you out" aria-label="Ask me here — I’ll help you out"
+              (input)="adjustHeight()" (keydown)="handleKeydown($event)">
+            </textarea>
+          </div>
+
+          <div role="button" aria-label="Enviar mensaje" tabindex="0"
+            class="flex w-max  h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
+            (click)="sendMessage(userMessage)">
+            <mat-icon class="text-white dark:text-neutral-800">arrow_upward</mat-icon>
+          </div>
+
+          <!-- <div class="flex h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
+            (click)="toggleSpeak()">
+            @if(speakIsEnabled) {
+            <mat-icon class="text-white dark:text-neutral-800">spatial_audio_off</mat-icon>
+            }@else {
+            <mat-icon class="text-white dark:text-neutral-800">volume_off</mat-icon>
+            }
+          </div> -->
+
+        </div>
+
+        <div class="flex text-sm text-neutral-600 dark:text-neutral-350 gap-3 pl-2">
+
+          @if (this.pagesService.sectionSelected() === 'All') {
+          <div
+            class="flex cursor-pointer h-9 items-center px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
+            (click)="sendMessage(this.pagesService.startLessonFull(), false)">
+            <mat-icon>speaker_notes</mat-icon>
+            <div class="hidden grow xs:block pl-2 truncate xs:max-w-32 sm:max-w-52 md:max-w-44 lg:max-w-60 xl:max-w-80">
+              {{this.pagesService.titleSelected()}}
+            </div>
+          </div>
+          }
+          @if (this.pagesService.sectionSelected() !== 'All') {
+          <div
+            class="flex cursor-pointer h-9 items-center px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
+            (click)="sendMessage(this.pagesService.startLesson(), false)">
+            <mat-icon>chat_info</mat-icon>
+            <div class="hidden grow xs:block pl-2 truncate xs:max-w-32 sm:max-w-52 md:max-w-44 lg:max-w-60 xl:max-w-80">
+              {{this.pagesService.titleSelected()}}
+            </div>
+          </div>
+          }
+
+          <div class="grow"></div>
+
+          <div
+            class="flex cursor-pointer h-9 items-center px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
+            (click)="sendMessage(this.pagesService.shortTest(), false)">
+            <mat-icon>person_raised_hand</mat-icon>
+            <div class="pl-2 hidden lg:block">easy</div>
+          </div>
+
+          <div
+            class="flex cursor-pointer h-9 items-center px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
+            (click)="sendMessage(this.pagesService.hardTest(), false)">
+            <mat-icon>quiz</mat-icon>
+            <div class="pl-2 hidden lg:block">hard</div>
+          </div>
+
+          <!-- <div
+            class="flex cursor-pointer h-9 items-center px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
+            (click)="testButton()">
+            <mat-icon>home</mat-icon>
+            <div class="pl-2 hidden lg:block">test</div>
+          </div> -->
+
+
+          <div class="flex h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
+            (click)="toggleSpeak()">
+            @if(speakIsEnabled) {
+            <mat-icon class="text-white dark:text-neutral-800">spatial_audio_off</mat-icon>
+            }@else {
+            <mat-icon class="text-white dark:text-neutral-800">volume_off</mat-icon>
+            }
+          </div>
+
+
+
+
+          <!-- <div role="button" aria-label="Enviar mensaje" tabindex="0"
+            class="flex w-max p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
+            (click)="sendMessage(userMessage)">
+            <mat-icon class="text-white dark:text-neutral-800">arrow_upward</mat-icon>
+          </div> -->
+
+
+
+        </div>
+      </div>
+
+
+    </div>
+
+  </div>
+</div>

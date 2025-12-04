@@ -1,0 +1,232 @@
+<!-- <div>
+  {{ "recruiter.own_resumes_title" | transloco }}
+</div> -->
+
+  @if(showLoadingBar()){
+      <div class="text-sm">
+        {{ "candidate.cv_processing" | transloco}}
+      </div>
+      <div>
+        <app-loading-bar></app-loading-bar>
+      </div>
+  }
+
+<form class="space-y-6">
+  <!-- CV Upload Field -->
+  @if(!showLoadingBar()){
+  <div class="flex flex-col text-center">
+    <!-- Input de tipo file oculto -->
+    <input type="file" id="cv-upload"
+      (change)="onFileSelected($event)"
+      accept=".pdf,.docx" required
+      class="hidden"> <!-- Clase 'hidden' para ocultar el input nativo -->
+
+    <!-- Botón personalizado para "Cargar Archivo" -->
+    <label for="cv-upload"
+          class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm
+                  text-base font-medium text-white bg-blue-600 hover:bg-blue-700 cursor-pointer
+                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                  dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-offset-neutral-800">
+        {{ "recruiter.add_resume" | transloco}}
+    </label>
+
+    <p class="mt-3 text-xs text-neutral-500 dark:text-neutral-400">{{ "candidate.accepted_format_start" | transloco}}{{ MAX_FILE_SIZE_MB }}{{ "candidate.accepted_format_end" | transloco}}</p>
+    <!-- Mensaje de error de tamaño de archivo -->
+    <p *ngIf="fileSizeError" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ "candidate.file_exceeds_size" | transloco}} {{ MAX_FILE_SIZE_MB }}{{ "candidate.file_exceeds_size_end" | transloco}}
+    </p>
+  </div>
+  }
+
+
+</form>
+
+
+<div
+  class="max-w-4xl mx-auto bg-white dark:bg-neutral-800 rounded-lg shadow-lg mb-2 p-2 sm:p-5 border border-neutral-200 dark:border-neutral-700"
+>
+
+@if(ownResumes.length == 0 && resumes.length == 0 ){
+  <div class="mx-4 text-center dark:text-neutral-200">
+   {{ "recruiter.here_show_all_resumes" | transloco }}
+  </div>
+}
+
+
+<!-- Button to expand ownResumes -->
+@if(ownResumes.length >= 1) {
+<div class="flex flex-col sm:flex-row gap-3 mt-2 font-light">
+  <div
+    class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+    (click)="switchShowOwnResumes()"
+  >
+    <div class="flex">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300"
+      >verified_user
+      </mat-icon>
+    </div>
+    <div class="flex pl-2">
+      {{ "recruiter.own_conctacts" | transloco }} ({{ ownResumes.length }})
+    </div>
+    <div class="flex pl-2 ml-auto">
+      @if(!showListOwnResumes) {
+      <mat-icon
+        class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+        >expand_circle_down</mat-icon
+      >
+      } @else {
+      <mat-icon
+        class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+        >expand_circle_up</mat-icon
+      >
+      }
+    </div>
+  </div>
+</div>
+}
+
+@if(showListOwnResumes){
+  <div class="grid grid-cols-1 sm:grid-cols-2 mt-2">
+  @for (ownresume of ownResumes; track ownresume.resumeId) {
+    <div class="sm:flex-row text-neutral-600 dark:text-neutral-300 py-2 px-1 border-b last:border-b-0 sm:border-0 border-neutral-200 dark:border-neutral-700">
+      <div class="flex items-center justify-between">
+        <div class="flex-grow sm:flex-grow-0 truncate overflow-hidden whitespace-nowrap pr-2">
+          • {{ ownresume.name }}
+        </div>
+        <div
+          (click)="showOwnResume(ownresume)"
+          class="flex cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 ml-auto"
+        >
+          <mat-icon class="text-neutral-600 dark:text-neutral-300">clinical_notes</mat-icon>
+          <span class="pl-2 pr-2">{{ 'recruiter.resume' | transloco }}</span>
+          <!-- @if(candidate.scoreToPosition !== null){
+            <span class="">{{ candidate.scoreToPosition / 10 | number:'1.1-1'}}%</span>
+          } @else {
+            <span class="">"?"</span>
+          } -->
+          <!-- @if(candidate.scoreToPosition != "N/A"){
+            <span class="">{{ candidate.scoreToPosition / 10 | number:'1.1-1'}}%</span>
+          } -->
+        </div>
+        <div class="sm:grow"></div>
+      </div>
+    </div>
+
+
+
+
+  <!-- <div class="max-w-4xl mx-auto bg-white dark:bg-neutral-800 rounded-lg shadow-md mb-1 p-2 border border-neutral-200 dark:border-neutral-700">
+    <div class="flex flex-row items-center align-middle space-x-2 h-7 gap-1">
+      <div class="flex grow items-center space-x-2">
+        <mat-icon class="text-neutral-600 dark:text-neutral-300">person</mat-icon>
+        <h2 class="text-lg font-medium text-neutral-900 dark:text-neutral-100">{{ ownresume.name }}</h2>
+      </div>
+      <div  (click)="showOwnResume(ownresume)"
+      class="cursor-pointer rounded-lg border px-2 py-1 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+        {{ 'recruiter.see_cv' | transloco }}
+      </div>
+    </div>
+  </div> -->
+
+  }
+  </div>
+
+}
+
+
+
+
+<!-- Button to expand resumes -->
+@if(resumes.length >= 1) {
+<div class="flex flex-col sm:flex-row gap-3 mt-2 font-light">
+  <div
+    class="flex items-center cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100"
+    (click)="switchShowResumes()"
+  >
+    <div class="flex">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300"
+      >groups
+      </mat-icon>
+    </div>
+    <div class="flex pl-2">
+      {{ "recruiter.candidates_resumes" | transloco }} ({{ resumes.length }})
+    </div>
+    <div class="flex pl-2 ml-auto">
+      @if(!showListResumes) {
+      <mat-icon
+        class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+        >expand_circle_down</mat-icon
+      >
+      } @else {
+      <mat-icon
+        class="text-neutral-600 dark:text-neutral-300 items-center align-middle"
+        >expand_circle_up</mat-icon
+      >
+      }
+    </div>
+  </div>
+</div>
+}
+
+@if(showListResumes) {
+  <div class="grid grid-cols-1 sm:grid-cols-2 mt-2">
+
+  @for (resume of resumes; track resume.candidateUID) {
+      <div class="sm:flex-row text-neutral-600 dark:text-neutral-300 py-2 px-1 border-b last:border-b-0 sm:border-0 border-neutral-200 dark:border-neutral-700">
+        <div class="flex items-center justify-between">
+          <div class="flex-grow sm:flex-grow-0 truncate overflow-hidden whitespace-nowrap pr-2">
+            • {{ resume.name }}
+          </div>
+          <div
+            (click)="showCandidateResume(resume)"
+            class="flex cursor-pointer rounded-lg border py-1 px-2 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 ml-auto"
+          >
+            <mat-icon class="text-neutral-600 dark:text-neutral-300">clinical_notes</mat-icon>
+            <span class="pl-2 pr-2">{{ 'recruiter.resume' | transloco }}</span>
+            <!-- @if(candidate.scoreToPosition !== null){
+              <span class="">{{ candidate.scoreToPosition / 10 | number:'1.1-1'}}%</span>
+            } @else {
+              <span class="">"?"</span>
+            } -->
+            <!-- @if(candidate.scoreToPosition != "N/A"){
+              <span class="">{{ candidate.scoreToPosition / 10 | number:'1.1-1'}}%</span>
+            } -->
+          </div>
+          <div class="sm:grow"></div>
+        </div>
+      </div>
+
+  <!-- <div class="max-w-4xl mx-auto bg-white dark:bg-neutral-800 rounded-lg shadow-md mb-1 p-2 border border-neutral-200 dark:border-neutral-700">
+    <div class="flex flex-row items-center align-middle space-x-2 h-7 gap-1">
+      <div class="flex grow items-center space-x-2">
+        <h2 class="text-lg font-medium text-neutral-900 dark:text-neutral-100">{{ resume.name }}</h2>
+      </div>
+      <div  (click)="showCandidateResume(resume)"
+      class="cursor-pointer rounded-lg border px-2 py-1 border-neutral-200 dark:border-neutral-700 bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100">
+        {{ 'recruiter.see_cv' | transloco }}
+      </div>
+    </div>
+  </div> -->
+
+  }
+  </div>
+}
+
+
+
+</div>
+
+@if (selectedOwnResume) {
+    <app-own-resume-viewer
+      [ownResume]="selectedOwnResume"
+      [recruiterId]="this.recruiterId"
+      (closeViewer)="selectedOwnResume = null"
+    ></app-own-resume-viewer>
+  }
+
+@if (selectedResume) {
+    <app-resume-viewer
+      [resumeForJob]="selectedResume"
+      (closeViewer)="selectedResume = null"
+    ></app-resume-viewer>
+  }

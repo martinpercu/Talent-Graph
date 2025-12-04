@@ -1,0 +1,111 @@
+<div
+  class="max-w-4xl mx-auto mb-2 bg-white dark:bg-neutral-800 rounded-lg shadow-lg p-6 border border-neutral-200 dark:border-neutral-700">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center space-x-2">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">book</mat-icon>
+      <h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ course.title }}</h2>
+    </div>
+    <span class="text-sm text-neutral-500 dark:text-neutral-400">Course {{ course.teacherName || 'N/A' }}</span>
+  </div>
+
+  <!-- Details Section -->
+  <div class="grid grid-cols-3 gap-6">
+    <!-- Title (Redundant) -->
+    <!-- <div class="flex items-center space-x-5">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">title</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Title</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ course.title }}</p>
+      </div>
+    </div> -->
+
+    <!-- Name -->
+    <!-- <div class="flex items-center space-x-5">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">label</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Name</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ course.name || 'N/A' }}</p>
+      </div>
+    </div> -->
+
+    <!-- Teacher -->
+    <!-- <div class="flex items-center space-x-5">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">person</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Course</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ course.teacherName || 'N/A' }}</p>
+      </div>
+    </div> -->
+
+
+    <!-- Difficulty -->
+    <div class="flex items-center space-x-5">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">trending_up</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Difficulty</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">
+          @switch (course.difficulty) {
+          @case (1) { Easy }
+          @case (2) { Moderate }
+          @case (3) { Challenging }
+          @case (4) { Hard }
+          @case (5) { Very Difficult }
+          @default { Unknown }
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Enabled -->
+    <div class="flex items-center space-x-5">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">{{ course.enabled ? 'check_circle' : 'cancel'
+        }}</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Status</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">{{ course.enabled ? 'Enabled' : 'Disabled' }}</p>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="flex items-center space-x-5">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">description</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Description</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400 truncate">{{ course.description || 'N/A' }}</p>
+      </div>
+    </div>
+
+    <!-- Start Date -->
+    <div class="flex items-center space-x-5">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">event</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">Start Date</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">
+          @if (course.startDate) {
+          {{ course.startDate | date: 'mediumDate' }}
+          } @else {
+          N/A
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- End Date -->
+    <div class="flex items-center space-x-5">
+      <mat-icon class="text-neutral-600 dark:text-neutral-300">event_busy</mat-icon>
+      <div>
+        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">End Date</p>
+        <p class="text-base text-neutral-600 dark:text-neutral-400">
+          @if (course.endDate) {
+          {{ course.endDate | date: 'mediumDate' }}
+          } @else {
+          N/A
+          }
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>

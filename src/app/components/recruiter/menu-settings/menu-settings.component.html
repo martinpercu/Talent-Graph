@@ -1,0 +1,128 @@
+<!-- <div class="flex"> -->
+  <div
+    class="flex flex-col w-52 h-fit text-sm text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-700"
+  >
+    <!-- <div class="flex sm:hidden flex-row px-2 py-1 mt-1">
+      @if(!showChangeLang) {
+      <div
+        class="flex flex-row p-2 grow cursor-pointer rounded-lg items-center"
+        (click)="showChangeList()"
+      >
+        <mat-icon>language</mat-icon>
+      </div>
+  }
+    </div> -->
+    <!-- @if(showChangeLang) {
+    <div class="sm:hidden py-2" (click)="showChangeList()">
+      <app-lang-switcher></app-lang-switcher>
+    </div>
+    } -->
+    <div class="flex flex-row px-2 py-1 mt-1">
+      <div
+        class="flex flex-row p-2 grow rounded-lg items-center"
+      >
+        <mat-icon>language</mat-icon>
+        <div class="pl-3 flex flex-row gap-4">
+          <div>{{ "top_right.language" | transloco }}</div>
+          @if(!showChangeLang) {
+          <div
+            class="cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-400 rounded-md px-1"
+            (click)="showChangeList()"
+          >
+            {{ "top_right.change" | transloco }}
+          </div>
+          } @if(showChangeLang) {
+          <app-lang-switcher (click)="showChangeList()"></app-lang-switcher>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-row px-2 py-1 mt-1">
+      <div
+        class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+        (click)="visualStatesService.handleRecruiterAccountShow(); visualStatesService.handleMenuTopRightShow()"
+      >
+        <mat-icon>settings</mat-icon>
+        <div class="flex pl-3">{{ "top_right.settings" | transloco }}</div>
+      </div>
+    </div>
+
+    @if(!themeService.isDarkModeSig()) {
+    <div
+      class="flex flex-row px-2 py-1 border-b border-gray-200 dark:border-gray-600"
+    >
+      <div
+        class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+        (click)="changeTheme(); visualStatesService.handleMenuTopRightShow()"
+      >
+        <mat-icon>dark_mode</mat-icon>
+        <div class="flex pl-3">{{ "top_right.dark" | transloco }}</div>
+      </div>
+    </div>
+    } @if(themeService.isDarkModeSig()) {
+    <div
+      class="flex flex-row px-2 py-1 border-b border-gray-200 dark:border-gray-600"
+    >
+      <div
+        class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+        (click)="changeTheme(); visualStatesService.handleMenuTopRightShow()"
+      >
+        <mat-icon>light_mode</mat-icon>
+        <div class="flex pl-3">{{ "top_right.light" | transloco }}</div>
+      </div>
+    </div>
+    } @if(recruiterService.recruiterSig()) {
+    <div class="flex flex-row px-2 py-1 border-gray-200 dark:border-gray-600">
+      <div
+        class="flex flex-row px-2 py-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+        (click)="logout()"
+      >
+        <mat-icon>logout</mat-icon>
+        <div class="flex pl-3 font-semibold">
+          {{ "top_right.logout" | transloco }}
+        </div>
+      </div>
+    </div>
+
+
+    } @if(recruiterService.recruiterSig() == null) {
+    <div
+      class="flex flex-col px-2 py-1 border-t border-neutral-100 dark:border-neutral-600"
+    >
+      <div
+        class="flex flex-row px-2 py-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+        (click)="setShowLoginAndSwitch()"
+      >
+        @if(this.showRegisterOrLogin() == undefined) {
+        <mat-icon>login</mat-icon>
+        } @if(this.showRegisterOrLogin() == false) {
+        <mat-icon>person_add</mat-icon>
+        } @if(this.showRegisterOrLogin() == true) {
+        <mat-icon>login</mat-icon>
+        }
+        <div class="flex pl-3 font-semibold">
+          @if(this.showRegisterOrLogin() == undefined) {
+          {{ "top_right.login_or_signup" | transloco }}}
+          @if(this.showRegisterOrLogin() == false) {
+          {{ "top_right.to_signup" | transloco }}}
+          @if(this.showRegisterOrLogin() == true) {
+          {{ "top_right.to_login" | transloco }}}
+        </div>
+      </div>
+      <div class="flex flex-col">
+        @if(this.showRegisterOrLogin() == false) {
+        <div class="mt-2 mb-1 border-neutral-500 bg-slate-100 dark:bg-neutral-800 rounded-xl">
+          <app-recruiter-login></app-recruiter-login>
+        </div>
+        } @if(this.showRegisterOrLogin() == true) {
+        <div class="mt-2 mb-1 border-neutral-500 bg-slate-100 dark:bg-neutral-800 rounded-xl">
+          <app-recruiter-register></app-recruiter-register>
+        </div>
+        }
+      </div>
+    </div>
+    }
+  <!-- } -->
+  </div>
+<!-- </div> -->

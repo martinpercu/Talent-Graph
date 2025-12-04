@@ -1,0 +1,14 @@
+<!-- <p>user-candidate-page works!</p> -->
+<app-candidate-header></app-candidate-header>
+
+
+
+
+@if(candidateService.candidateSig()?.resumeInDB && lastCandidateJob){
+  <div class="bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+    <div class="flex flex-col text-center bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl w-full max-w-md border border-neutral-200 dark:border-neutral-700">
+      {{ "candidate.profil_evaluating_for" | transloco}}<br>
+      <span class="font-semibold mt-1">"{{ lastCandidateJob.name }}."</span>
+    </div>
+  </div>
+}

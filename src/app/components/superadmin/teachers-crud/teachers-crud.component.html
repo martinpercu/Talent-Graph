@@ -1,0 +1,358 @@
+<div class="teacher-loader mx-auto mt-8 max-w-3xl bg-neutral-100 p-8">
+  <h2 class="text-2xl font-bold mb-4">Cargar Teacher</h2>
+  <select
+    [ngModel]="selectedTeacherId"
+    (change)="loadTeacher($event)"
+    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+    <option value="">Selecciona un teacher</option>
+    @for (teacher of teachers$ | async; track teacher.id) {
+      <option [value]="teacher.id">{{ teacher.name }}</option>
+    }
+  </select>
+
+  <h3 class="text-xl font-semibold mt-6 mb-4">{{ editingTeacherId ? 'Editar Teacher' : 'Crear Nuevo Teacher' }}</h3>
+  <form (ngSubmit)="saveTeacher()" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Nombre:</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.name"
+        name="name"
+        required
+      >
+      @if (errorMessage) {
+        <p class="text-red-500 text-sm mt-1">{{ errorMessage }}</p>
+      }
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Título Predeterminado:</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.defaultTitle"
+        name="defaultTitle"
+        required
+      >
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Ruta del Documento (ej. pdfs/nombre.pdf):</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.doc_path"
+        name="doc_path"
+        required
+        pattern="pdfs\\/[a-zA-Z0-9-_]+\\.pdf"
+      >
+    </div>
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-700">Secciones:</label>
+      @for (section of sections; track $index; let i = $index) {
+        <div class="flex space-x-2 items-center">
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.name"
+            [name]="'section-name-' + i"
+            placeholder="Nombre de la sección"
+            required
+          >
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.subtext"
+            [name]="'section-subtext-' + i"
+            placeholder="Subtítulo"
+            required
+          >
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.pages"
+            [name]="'section-pages-' + i"
+            placeholder="Páginas (ej. 0,1,2)"
+            required
+          >
+          <button
+            type="button"
+            (click)="removeSection(i)"
+            class="bg-red-500 text-white px-2 py-1 rounded-md"
+            [disabled]="sections.length <= 1">
+            Eliminar
+          </button>
+        </div>
+      }
+      <button
+        type="button"
+        (click)="addSection()"
+        class="bg-blue-500 text-white px-4 py-2 rounded-md mt-2">
+        Agregar Sección
+      </button>
+    </div>
+
+    <div class="flex space-x-2">
+      <button
+        type="submit"
+        class="bg-green-500 text-white px-4 py-2 rounded-md">
+        {{ editingTeacherId ? 'Actualizar Teacher' : 'Crear Teacher' }}
+      </button>
+      @if (editingTeacherId) {
+        <button
+          type="button"
+          (click)="resetForm()"
+          class="bg-gray-500 text-white px-4 py-2 rounded-md">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="deleteTeacher()"
+          class="bg-red-500 text-white px-4 py-2 rounded-md">
+          Eliminar Teacher
+        </button>
+      }
+    </div>
+  </form>
+</div>
+
+
+
+<!-- <div class="teacher-loader ml-8 mt-8">
+  <h2 class="text-2xl font-bold mb-4">Cargar Teacher</h2>
+  <select
+    [(ngModel)]="selectedTeacherId"
+    (ngModelChange)="loadTeacher($event)"
+    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+    <option value="">Selecciona un teacher</option>
+    @for (teacher of teachers$ | async; track teacher.id) {
+      <option [value]="teacher.id">{{ teacher.name }}</option>
+    }
+  </select>
+
+  <h3 class="text-xl font-semibold mt-6 mb-4">{{ editingTeacherId ? 'Editar Teacher' : 'Crear Nuevo Teacher' }}</h3>
+  <form (ngSubmit)="saveTeacher()" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Nombre:</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.name"
+        name="name"
+        required
+      >
+      @if (errorMessage) {
+        <p class="text-red-500 text-sm mt-1">{{ errorMessage }}</p>
+      }
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Título Predeterminado:</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.defaultTitle"
+        name="defaultTitle"
+        required
+      >
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Ruta del Documento (ej. pdfs/nombre.pdf):</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.doc_path"
+        name="doc_path"
+        required
+        pattern="pdfs\\/[a-zA-Z0-9-_]+\\.pdf"
+      >
+    </div>
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-700">Secciones:</label>
+      @for (section of sections; track $index; let i = $index) {
+        <div class="flex space-x-2 items-center">
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.name"
+            [name]="'section-name-' + i"
+            placeholder="Nombre de la sección"
+            required
+          >
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.subtext"
+            [name]="'section-subtext-' + i"
+            placeholder="Subtítulo"
+            required
+          >
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.pages"
+            [name]="'section-pages-' + i"
+            placeholder="Páginas (ej. 0,1,2)"
+            required
+          >
+          <button
+            type="button"
+            (click)="removeSection(i)"
+            class="bg-red-500 text-white px-2 py-1 rounded-md"
+            [disabled]="sections.length <= 1">
+            Eliminar
+          </button>
+        </div>
+      }
+      <button
+        type="button"
+        (click)="addSection()"
+        class="bg-blue-500 text-white px-4 py-2 rounded-md mt-2">
+        Agregar Sección
+      </button>
+    </div>
+
+    <div class="flex space-x-2">
+      <button
+        type="submit"
+        class="bg-green-500 text-white px-4 py-2 rounded-md">
+        {{ editingTeacherId ? 'Actualizar Teacher' : 'Crear Teacher' }}
+      </button>
+      @if (editingTeacherId) {
+        <button
+          type="button"
+          (click)="resetForm()"
+          class="bg-gray-500 text-white px-4 py-2 rounded-md">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="deleteTeacher()"
+          class="bg-red-500 text-white px-4 py-2 rounded-md">
+          Eliminar Teacher
+        </button>
+      }
+    </div>
+  </form>
+</div> -->
+
+<!-- <div class="teacher-loader ml-8 mt-8">
+  <h2 class="text-2xl font-bold mb-4">Cargar Teacher</h2>
+  <select (change)="loadTeacher($event)" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+    <option value="">Selecciona un teacher</option>
+    @for (teacher of teachers$ | async; track teacher.id) {
+      <option [value]="teacher.id">{{ teacher.name }}</option>
+    }
+  </select>
+
+  <h3 class="text-xl font-semibold mt-6 mb-4">{{ editingTeacherId ? 'Editar Teacher' : 'Crear Nuevo Teacher' }}</h3>
+  <form (ngSubmit)="saveTeacher()" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Nombre:</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.name"
+        name="name"
+        required
+      >
+      @if (errorMessage) {
+        <p class="text-red-500 text-sm mt-1">{{ errorMessage }}</p>
+      }
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Título Predeterminado:</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.defaultTitle"
+        name="defaultTitle"
+        required
+      >
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Ruta del Documento (ej. pdfs/nombre.pdf):</label>
+      <input
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+        type="text"
+        [(ngModel)]="newTeacher.doc_path"
+        name="doc_path"
+        required
+        pattern="pdfs\\/[a-zA-Z0-9-_]+\\.pdf"
+      >
+    </div>
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-700">Secciones:</label>
+      @for (section of sections; track section.name; let i = $index) {
+        <div class="flex space-x-2 items-center">
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.name"
+            [name]="'section-name-' + i"
+            placeholder="Nombre de la sección"
+            required
+          >
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.subtext"
+            [name]="'section-subtext-' + i"
+            placeholder="Subtítulo"
+            required
+          >
+          <input
+            class="border-gray-300 rounded-md shadow-sm"
+            type="text"
+            [(ngModel)]="section.pages"
+            [name]="'section-pages-' + i"
+            placeholder="Páginas (ej. 0,1,2)"
+            required
+          >
+          <button
+            type="button"
+            (click)="removeSection(i)"
+            class="bg-red-500 text-white px-2 py-1 rounded-md"
+          >
+            Eliminar
+          </button>
+        </div>
+      }
+      <button
+        type="button"
+        (click)="addSection()"
+        class="bg-blue-500 text-white px-4 py-2 rounded-md mt-2"
+      >
+        Agregar Sección
+      </button>
+    </div>
+
+    <div class="flex space-x-2">
+      <button
+        type="submit"
+        class="bg-green-500 text-white px-4 py-2 rounded-md"
+      >
+        {{ editingTeacherId ? 'Actualizar Teacher' : 'Crear Teacher' }}
+      </button>
+      @if (editingTeacherId) {
+        <button
+          type="button"
+          (click)="resetForm()"
+          class="bg-gray-500 text-white px-4 py-2 rounded-md"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="deleteTeacher()"
+          class="bg-red-500 text-white px-4 py-2 rounded-md"
+        >
+          Eliminar Teacher
+        </button>
+      }
+    </div>
+  </form>
+</div> -->
+
+

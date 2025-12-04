@@ -1,0 +1,80 @@
+<div
+  class="z-[51] absolute flex flex-col w-screen h-full bg-neutral-200 dark:bg-neutral-900">
+  <div
+    class="m-auto max-w-[90%] sm:max-w-screen-sm md:max-w-screen-md py-4 px-1 sm:p-10 bg-white border border-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 rounded-2xl shadow">
+
+
+    <div class="flex flex-col items-center text-center text-xs sm:text-sm text-neutral-700 dark:text-neutral-200">
+
+      <div class="w-16 sm:w-24">
+        <img src="./../../../assets/image/bridge-logo-120.png" alt="">
+      </div>
+
+
+      <div class="mb-5 sm:mb-7 mt-1 sm:mt-4 px-4 text-base sm:text-xl font-medium text-brand">
+        {{ 'main.welcome_to' | transloco }}  {{this.appName}}<br>
+        <div class="mt-1 sm:mt-2">- {{ 'main.copy_1' | transloco }} -</div>
+      </div>
+
+      <!-- <div class="mb-5 sm:mb-7 mt-4 px-4 text-base sm:text-xl font-medium text-brand">
+      </div> -->
+
+      <div class="pb-6 w-2/3">
+        <div class="pb-4">
+          {{ 'main.this_is_beta' | transloco }}
+          <!-- <strong>"{{ 'main.human_resourses' | transloco }}"</strong>. -->
+          <!-- <mat-icon class="pt-1">speaker_notes</mat-icon> -->
+        </div>
+      </div>
+
+
+      <div class="flex flex-row gap-2 sm:gap-8 py-2 sm:pt-2 pt-0 sm:pb-8 pb-4 mx-2">
+
+
+        <div (click)="goToRecruiter()"
+          class="flex items-center p-3 gap-2 text-sm font-semibold bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">
+          <mat-icon class="">person_raised_hand</mat-icon>
+          {{ 'main.enter_account' | transloco }}
+        </div>
+
+        <!-- <div (click)="goToNotRecruiter()"
+          class="flex items-center p-2 sm:p-3 sm:gap-2 text-sm font-semibold bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">
+          <mat-icon class="!hidden sm:!block">rocket_launch</mat-icon>
+          {{ 'main.im_candidate' | transloco }}
+        </div> -->
+
+      </div>
+
+
+
+      <!-- Explicación de los tres botones en el chat -->
+      <!-- <div class="pb-4 w-11/12 mt-8">
+        <div class="pb-4 font-semibold text-sm">
+          {{ 'main.chat_tools' | transloco }}
+        </div>
+        <div class="text-left flex flex-col gap-2">
+          <div class="flex items-start mb-2">
+            <div class="w-7">
+              <mat-icon class="text-2xl !w-7 !h-7">chat_info</mat-icon>
+            </div>
+            <span class="ml-4">{{ 'main.teacher_start' | transloco }}</span>
+          </div>
+          <div class="flex items-start mb-2">
+            <div class="w-7">
+              <mat-icon class="text-2xl !w-7 !h-7">person_raised_hand</mat-icon>
+            </div>
+            <span class="ml-4">{{ 'main.teacher_ask_1_question' | transloco }}</span>
+          </div>
+          <div class="flex items-start mb-2">
+            <div class="w-7">
+              <mat-icon class="text-2xl !w-7 !h-7">quiz</mat-icon>
+            </div>
+            <span class="ml-4">{{ 'main.teacher_test_you' | transloco }}.</span>
+          </div>
+        </div>
+      </div> -->
+
+
+    </div>
+  </div>
+</div>

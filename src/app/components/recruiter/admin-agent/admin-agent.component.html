@@ -1,0 +1,254 @@
+<div class="mx-auto p-4">
+  <div>
+    <app-sync-job></app-sync-job>
+  </div>
+  <div>
+    <app-sync-resume></app-sync-resume>
+  </div>
+  <!-- Header -->
+  <div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-xl border dark:border-neutral-700 mb-6">
+    <div class="flex items-center gap-3">
+      <mat-icon class="text-red-600 dark:text-red-400 text-3xl">warning</mat-icon>
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Agent Database Maintenance
+        </h2>
+        <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+          Panel de administración para operaciones destructivas en la base de datos del agente
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authorization Check -->
+  @if (isCheckingAuth) {
+    <div class="bg-blue-50 dark:bg-neutral-800 p-6 rounded-lg border border-blue-200 dark:border-neutral-700">
+      <div class="flex items-center gap-3">
+        <mat-icon class="text-blue-600 dark:text-blue-400 animate-spin">sync</mat-icon>
+        <p class="text-neutral-700 dark:text-neutral-300">Verificando permisos de autorización...</p>
+      </div>
+    </div>
+  }
+
+  <!-- Not Authorized -->
+  @if (!isCheckingAuth && !isAuthorized) {
+    <div class="bg-red-50 dark:bg-neutral-800 p-6 rounded-lg border border-red-200 dark:border-red-700">
+      <div class="flex items-center gap-3">
+        <mat-icon class="text-red-600 dark:text-red-400 text-2xl">block</mat-icon>
+        <div>
+          <p class="text-neutral-900 dark:text-neutral-100 font-semibold">Acceso Denegado</p>
+          <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+            No tienes permisos para acceder a estas operaciones de mantenimiento.
+            Contacta al administrador del sistema.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Authorized - Show Controls -->
+  @if (!isCheckingAuth && isAuthorized) {
+    <div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-xl border dark:border-neutral-700">
+
+      <!-- Warning Banner -->
+      <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+        <div class="flex gap-3">
+          <mat-icon class="text-yellow-600 dark:text-yellow-400">info</mat-icon>
+          <div>
+            <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              Todas estas operaciones son IRREVERSIBLES
+            </p>
+            <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+              Los datos eliminados no se pueden recuperar. Usa con extremo cuidado.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Individual Operations -->
+      <div class="space-y-4 mb-6">
+        <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
+          Operaciones Individuales
+        </h3>
+
+        <!-- Truncate Resumes -->
+        <div class="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-750">
+          <div class="flex items-center gap-3">
+            <mat-icon class="text-orange-600 dark:text-orange-400">description</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-900 dark:text-neutral-100">Eliminar Resumes</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-400">Borra todos los CVs del agente</p>
+            </div>
+          </div>
+          <button
+            (click)="handleTruncateResumes()"
+            class="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white rounded-md transition-colors"
+          >
+            <mat-icon>delete_forever</mat-icon>
+            <span>Truncate Resumes</span>
+          </button>
+        </div>
+
+        <!-- Truncate Jobs -->
+        <div class="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-750">
+          <div class="flex items-center gap-3">
+            <mat-icon class="text-orange-600 dark:text-orange-400">work</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-900 dark:text-neutral-100">Eliminar Jobs</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-400">Borra todas las posiciones del agente</p>
+            </div>
+          </div>
+          <button
+            (click)="handleTruncateJobs()"
+            class="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white rounded-md transition-colors"
+          >
+            <mat-icon>delete_forever</mat-icon>
+            <span>Truncate Jobs</span>
+          </button>
+        </div>
+
+        <!-- Truncate Threads -->
+        <div class="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-750">
+          <div class="flex items-center gap-3">
+            <mat-icon class="text-orange-600 dark:text-orange-400">chat</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-900 dark:text-neutral-100">Eliminar Conversaciones</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-400">Borra todos los threads y checkpoints del agente</p>
+            </div>
+          </div>
+          <button
+            (click)="handleTruncateThreads()"
+            class="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white rounded-md transition-colors"
+          >
+            <mat-icon>delete_forever</mat-icon>
+            <span>Truncate Threads</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="border-t border-neutral-300 dark:border-neutral-700 my-6"></div>
+
+      <!-- Recreate Tables Section -->
+      <div class="space-y-4 mb-6">
+        <h3 class="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-3 flex items-center gap-2">
+          <mat-icon>refresh</mat-icon>
+          Recrear Tablas (Schema Fix)
+        </h3>
+
+        <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-4">
+          <div class="flex gap-3">
+            <mat-icon class="text-purple-600 dark:text-purple-400">info</mat-icon>
+            <div>
+              <p class="text-sm font-medium text-purple-800 dark:text-purple-200">
+                Recrear tablas con schema correcto
+              </p>
+              <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                Útil cuando hay schema mismatch entre código y DB (ej: nuevas columnas en Railway).
+                Elimina y recrea las tablas, perdiendo todos los datos.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recreate Resumes -->
+        <div class="flex items-center justify-between p-4 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/10">
+          <div class="flex items-center gap-3">
+            <mat-icon class="text-purple-600 dark:text-purple-400">table_chart</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-900 dark:text-neutral-100">Recrear Tabla Resumes</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-400">Drop + Create con schema correcto</p>
+            </div>
+          </div>
+          <button
+            (click)="handleRecreateResumes()"
+            class="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white rounded-md transition-colors"
+          >
+            <mat-icon>refresh</mat-icon>
+            <span>Recreate Resumes</span>
+          </button>
+        </div>
+
+        <!-- Recreate Jobs -->
+        <div class="flex items-center justify-between p-4 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/10">
+          <div class="flex items-center gap-3">
+            <mat-icon class="text-purple-600 dark:text-purple-400">table_chart</mat-icon>
+            <div>
+              <p class="font-medium text-neutral-900 dark:text-neutral-100">Recrear Tabla Jobs</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-400">Drop + Create con schema correcto</p>
+            </div>
+          </div>
+          <button
+            (click)="handleRecreateJobs()"
+            class="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white rounded-md transition-colors"
+          >
+            <mat-icon>refresh</mat-icon>
+            <span>Recreate Jobs</span>
+          </button>
+        </div>
+
+        <!-- Recreate All Tables -->
+        <div class="flex items-center justify-between p-4 border-2 border-purple-400 dark:border-purple-600 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/10">
+          <div class="flex items-center gap-3">
+            <mat-icon class="text-purple-600 dark:text-purple-400 text-xl">auto_fix_high</mat-icon>
+            <div>
+              <p class="font-bold text-neutral-900 dark:text-neutral-100">Recrear TODAS las Tablas</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-400">Drop + Create Resumes + Jobs</p>
+            </div>
+          </div>
+          <button
+            (click)="handleRecreateAllTables()"
+            class="flex items-center gap-2 px-5 py-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 text-white rounded-md transition-colors font-semibold"
+          >
+            <mat-icon>refresh</mat-icon>
+            <span>Recreate ALL</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="border-t border-neutral-300 dark:border-neutral-700 my-6"></div>
+
+      <!-- Nuclear Option -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
+          <mat-icon>dangerous</mat-icon>
+          Zona de Peligro
+        </h3>
+
+        <div class="p-4 border-2 border-red-500 dark:border-red-700 rounded-lg bg-red-50 dark:bg-red-900/20">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-3 flex-1">
+              <mat-icon class="text-red-600 dark:text-red-400 text-2xl">nuclear</mat-icon>
+              <div>
+                <p class="font-bold text-red-900 dark:text-red-100">Eliminar TODO</p>
+                <p class="text-sm text-red-800 dark:text-red-200 mt-1">
+                  Borra TODA la base de datos del agente: Resumes, Jobs y Conversaciones.
+                </p>
+                <p class="text-xs text-red-700 dark:text-red-300 mt-2 font-semibold">
+                  ⚠️  Requiere confirmación doble. Esta acción es IRREVERSIBLE.
+                </p>
+              </div>
+            </div>
+            <button
+              (click)="handleTruncateAll()"
+              class="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-md transition-colors font-bold"
+            >
+              <mat-icon>delete_sweep</mat-icon>
+              <span>TRUNCATE ALL</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Footer -->
+      <div class="mt-6 p-4 bg-neutral-100 dark:bg-neutral-900 rounded-lg">
+        <p class="text-xs text-neutral-600 dark:text-neutral-400">
+          <mat-icon class="text-sm align-middle mr-1">info_outline</mat-icon>
+          Todas las operaciones registran logs en la consola del navegador y del servidor.
+          Verifica los logs para confirmar las operaciones.
+        </p>
+      </div>
+    </div>
+  }
+</div>

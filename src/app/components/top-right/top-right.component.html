@@ -1,0 +1,180 @@
+<div (click)="switchShowList()" class="z-20 absolute right-0 top-0 p-2">
+  <div class="flex flex-col">
+    <div
+      class="flex flex-row absolute right-3 text-right pr-4 pl-4 py-2 border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-200 rounded-2xl cursor-pointer border shadow-md"
+    >
+      <div class="hidden sm:flex pr-2">Menu</div>
+      <mat-icon class="scale-150 text-neutral-600 dark:text-neutral-200"
+        >menu_open</mat-icon
+      >
+    </div>
+
+    @if(showlist) {
+
+    <div class="mt-12 flex bg-transparent w-[100vw] h-[92vh]">
+      <div class="grow"></div>
+
+      <div
+        (click)="$event.stopPropagation()"
+        class="flex flex-col w-80 h-fit text-sm text-neutral-700 dark:text-neutral-200 bg26 bg-white dark:bg-neutral-750 rounded-2xl shadow-lg border border-gray-200 dark:border-neutral-700"
+      >
+        <!-- "How it works" -->
+        <div class="flex flex-row px-2 py-1 mt-1">
+          <div class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+            (click)="showModalInfo()">
+            <mat-icon>info</mat-icon>
+            <div class="pl-3">{{ "top_right.how_works" | transloco }}</div>
+          </div>
+        </div>
+
+        <!-- "See Docs" (visible en pantallas pequeñas) -->
+        <div class="sm:hidden flex flex-row px-2 py-1 mt-1">
+          <div
+            class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+            (click)="pdfNotAcces()"
+          >
+            <mat-icon>picture_as_pdf</mat-icon>
+            <div class="pl-3">{{ "top_right.see_docs" | transloco }}</div>
+          </div>
+        </div>
+
+        <!-- "See Docs" (visible en pantallas grandes) -->
+        <div class="hidden sm:flex flex-row px-2 py-1 mt-1">
+          <div
+            class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+            (click)="toPdf()"
+          >
+            <mat-icon>picture_as_pdf</mat-icon>
+            <div class="pl-3">{{ "top_right.see_docs" | transloco }}</div>
+          </div>
+        </div>
+
+        <!-- "Go to exam" -->
+        <div class="flex flex-row px-2 py-1 mt-1">
+          <div
+            class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+            (click)="takeExam()"
+          >
+            <mat-icon>checklist</mat-icon>
+            <div class="pl-3">{{ "top_right.take_exam" | transloco }}</div>
+          </div>
+        </div>
+
+        <!-- "Change Language" -->
+        <div class="flex flex-row px-2 py-1 mt-1">
+          <div
+            class="flex flex-row p-2 grow cursor-pointer rounded-lg items-center"
+          >
+            <mat-icon>language</mat-icon>
+            <!-- @if(!showChangeLang) {
+              <div (click)="showChangList()" class="pl-3">Language</div>
+            } -->
+            <div class="pl-3 flex flex-row gap-4">
+              <div>{{ "top_right.language" | transloco }}</div>
+              @if(!showChangeLang) {
+              <div class="hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-400 rounded-md px-1" (click)="showChangeList()">
+                {{ "top_right.change" | transloco }}
+              </div>
+              } @if(showChangeLang) {
+                <app-lang-switcher
+                  (click)="showChangeList()"
+                ></app-lang-switcher>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- <div class="flex flex-row px-2 py-1">
+          <div class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700">
+            <mat-icon fontIcon="settings" class=""></mat-icon>
+            <div class="pl-3">Settings</div>
+          </div>
+        </div> -->
+        @if(!themeService.isDarkModeSig()) {
+        <div
+          class="flex flex-row px-2 py-1 border-b border-gray-200 dark:border-gray-600"
+        >
+          <div
+            class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+            (click)="changeTheme()"
+          >
+            <!-- <mat-icon fontIcon="dark_mode" class="self-center"></mat-icon> -->
+            <mat-icon>dark_mode</mat-icon>
+            <div class="pl-3">{{ "top_right.dark" | transloco }}</div>
+          </div>
+        </div>
+        } @if(themeService.isDarkModeSig()) {
+        <div
+          class="flex flex-row px-2 py-1 border-b border-gray-200 dark:border-gray-600"
+        >
+          <div
+            class="flex flex-row p-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+            (click)="changeTheme()"
+          >
+            <!-- <mat-icon fontIcon="light_mode" class="self-center"></mat-icon> -->
+            <mat-icon>light_mode</mat-icon>
+            <div class="pl-3">{{ "top_right.light" | transloco }}</div>
+          </div>
+        </div>
+        } @if(userService.userSig()) {
+        <div
+          class="flex flex-row px-2 py-1 border-gray-200 dark:border-gray-600"
+        >
+          <div
+            class="flex flex-row px-2 py-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+            (click)="logout()"
+          >
+            <!-- <mat-icon fontIcon="logout" class="self-center"></mat-icon> -->
+            <mat-icon>logout</mat-icon>
+            <div class="pl-3 font-semibold">
+              {{ "top_right.logout" | transloco }}
+            </div>
+          </div>
+        </div>
+        } @if(userService.userSig() == null) {
+        <div
+          class="flex flex-col px-2 py-1 border-t border-neutral-100 dark:border-neutral-600"
+        >
+          <div
+            class="flex flex-row px-2 py-2 grow cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 items-center"
+            (click)="setShowLoginAndSwitch()"
+          >
+            @if(this.showRegisterOrLogin() == undefined) {
+            <!-- <mat-icon fontIcon="login" class="self-center"></mat-icon> -->
+            <mat-icon>login</mat-icon>
+            } @if(this.showRegisterOrLogin() == true) {
+            <!-- <mat-icon fontIcon="person_add" class="self-center"></mat-icon> -->
+            <mat-icon>person_add</mat-icon>
+            } @if(this.showRegisterOrLogin() == false) {
+            <!-- <mat-icon fontIcon="login" class="self-center"></mat-icon> -->
+            <mat-icon>login</mat-icon>
+            }
+            <!-- <mat-icon fontIcon="login" class="self-center"></mat-icon> -->
+            <div class="pl-3 font-semibold">
+              @if(this.showRegisterOrLogin() == undefined) {
+              {{ "top_right.login_or_signup" | transloco }}}
+              @if(this.showRegisterOrLogin() == true) {
+              {{ "top_right.to_signup" | transloco }}}
+              @if(this.showRegisterOrLogin() == false) {
+              {{ "top_right.to_login" | transloco }}}
+            </div>
+          </div>
+          <div class="flex flex-row">
+            @if(this.showRegisterOrLogin() == true) {
+            <div class="m-auto mt-4">
+              <app-login></app-login>
+            </div>
+            } @if(this.showRegisterOrLogin() == false) {
+            <div class="m-auto mt-4">
+              <app-register></app-register>
+            </div>
+            }
+          </div>
+        </div>
+        }
+        <!-- <div class="px-4 py-4 rounded-b-lg">Download</div> -->
+      </div>
+    </div>
+    }
+  </div>
+</div>
