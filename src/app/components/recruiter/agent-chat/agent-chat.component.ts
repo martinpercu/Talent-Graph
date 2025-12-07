@@ -98,6 +98,8 @@ export class AgentChatComponent implements OnInit {
   /**
    * Limpia threads con nombre ". . ." que no tienen mensajes reales
    * (solo tienen el mensaje trigger o están completamente vacíos)
+   *
+   * IMPORTANTE: NO elimina threads si hay errores de red para evitar pérdida de datos
    */
   private async cleanEmptyThreads(): Promise<void> {
     const threads = this.agentChatListService.getThreads();
@@ -119,26 +121,19 @@ export class AgentChatComponent implements OnInit {
       // Si no hay mensajes en caché, intentar obtener del backend
       if (cachedMessages.length === 0) {
         try {
-          const response = await firstValueFrom(this.agentChatService.getThreadHistory(thread.threadId, 50));
+          const history = await firstValueFrom(this.agentChatService.getThreadHistory(thread.threadId, 50));
 
-          // 🔍 DEBUG: Ver qué devuelve el backend
-          console.log(`🔍 Backend response para thread ${thread.threadId}:`, response);
-          console.log(`🔍 Mensajes recibidos:`, response?.messages);
+          console.log(`🔍 Backend response para thread ${thread.threadId}:`, history);
+          console.log(`   exists: ${history.exists}, isEmpty: ${history.isEmpty}, hasUserMessages: ${history.hasUserMessages}, messageCount: ${history.messageCount}`);
 
-          // Verificar si hay mensajes reales del usuario (no solo el trigger)
-          const messages = response?.messages || [];
-          const hasUserMessages = messages.some(m => m.role === 'user');
-
-          console.log(`🔍 hasUserMessages: ${hasUserMessages}, messages.length: ${messages.length}`);
-
-          // También verificar si SOLO tiene el mensaje trigger (sin otros mensajes)
-          const onlyHasTrigger = messages.length === 0 ||
-                                 (messages.length === 1 && messages[0].message === 'start-loading-state');
-
-          console.log(`🔍 onlyHasTrigger: ${onlyHasTrigger}`);
-
-          if (!hasUserMessages || onlyHasTrigger) {
-            console.log(`🗑️ Eliminando thread vacío (sin mensajes del user o solo trigger): ${thread.threadId}`);
+          // ✅ Usar los nuevos campos del backend (más confiables)
+          if (!history.exists) {
+            // Thread nunca existió en el backend
+            console.log(`🗑️ Thread no existe en backend - safe to delete: ${thread.threadId}`);
+            await this.agentChatListService.deleteThread(thread.threadId);
+          } else if (history.isEmpty || !history.hasUserMessages) {
+            // Thread existe pero está vacío o solo tiene mensajes del sistema
+            console.log(`🗑️ Thread vacío confirmado por backend (messageCount: ${history.messageCount}): ${thread.threadId}`);
             await this.agentChatListService.deleteThread(thread.threadId);
 
             // También borrar del backend
@@ -147,12 +142,14 @@ export class AgentChatComponent implements OnInit {
               error: (err) => console.error('❌ Error al eliminar thread del backend:', err)
             });
           } else {
-            console.log(`✅ Thread tiene mensajes válidos - NO eliminar`);
+            // Thread tiene mensajes válidos del usuario
+            console.log(`✅ Thread tiene ${history.messageCount} mensajes (${history.hasUserMessages ? 'con' : 'sin'} mensajes de usuario) - NO eliminar`);
           }
-        } catch (error) {
-          // Si falla al obtener historial, asumir que está vacío y borrarlo
-          console.log(`🗑️ Error al obtener historial - eliminando thread: ${thread.threadId}`, error);
-          await this.agentChatListService.deleteThread(thread.threadId);
+        } catch (error: any) {
+          // ⚠️ CRÍTICO: NO eliminar el thread si hay error de red
+          // El backend mejorado siempre retorna JSON válido, así que un error aquí es de red
+          console.error(`❌ Error de red al obtener historial del thread ${thread.threadId}:`, error);
+          console.warn(`⚠️ NO eliminando thread - backend no disponible (posible error de conexión)`);
         }
       } else {
         // Hay mensajes en caché - verificar si hay mensajes del usuario
@@ -163,7 +160,7 @@ export class AgentChatComponent implements OnInit {
                                cachedMessages[0].message === 'start-loading-state';
 
         if (!hasUserMessages || onlyHasTrigger) {
-          console.log(`🗑️ Eliminando thread vacío (solo caché sin user o solo trigger): ${thread.threadId}`);
+          console.log(`🗑️ Eliminando thread vacío (solo trigger en caché): ${thread.threadId}`);
           await this.agentChatListService.deleteThread(thread.threadId);
 
           // También borrar del backend
@@ -171,6 +168,8 @@ export class AgentChatComponent implements OnInit {
             next: () => console.log('✅ Thread vacío eliminado del backend'),
             error: (err) => console.error('❌ Error al eliminar thread del backend:', err)
           });
+        } else {
+          console.log(`✅ Thread tiene mensajes en caché - NO eliminar`);
         }
       }
     }
@@ -216,15 +215,22 @@ export class AgentChatComponent implements OnInit {
     // 2️⃣ PASO 2: Pedir al backend en paralelo (para sincronizar)
     console.log('🌐 Solicitando historial al backend...');
     this.agentChatService.getThreadHistory(threadId, 50).subscribe({
-      next: (response) => {
-        console.log(`✅ Historial recibido del backend: ${response.messages.length} mensajes`);
-        console.log('📋 DETALLE DE MENSAJES:', response.messages);
+      next: (history) => {
+        console.log(`✅ Historial recibido del backend:`);
+        console.log(`   exists: ${history.exists}, isEmpty: ${history.isEmpty}, messageCount: ${history.messageCount}`);
+        console.log(`   hasUserMessages: ${history.hasUserMessages}, lastUpdated: ${history.lastUpdated}`);
+
+        if (!history.exists) {
+          console.warn('⚠️ Thread no existe en el backend - mantener caché local');
+          // Mantener mensajes del caché si los hay
+          return;
+        }
 
         // Actualizar con los mensajes del backend
-        this.chatMessages = [...response.messages];
+        this.chatMessages = [...history.messages];
 
         // Guardar en caché para la próxima vez
-        this.agentChatListService.saveMessagesToCache(threadId, response.messages);
+        this.agentChatListService.saveMessagesToCache(threadId, history.messages);
 
         // Hacer scroll al final
         setTimeout(() => this.scrollToBottomFromArrow(), 100);
@@ -300,15 +306,26 @@ export class AgentChatComponent implements OnInit {
 
     console.log('🎯 Focus en textarea sin thread - creando thread automáticamente...');
 
-    // Crear thread vacío
-    const newThreadId = await this.agentChatListService.createEmptyThread();
-    console.log('✨ Thread creado automáticamente en focus:', newThreadId);
+    // Generar threadId
+    const newThreadId = this.agentChatListService.generateThreadId();
+    console.log('🆔 ThreadId generado en focus:', newThreadId);
 
-    // Enviar trigger para cargar state
-    await this.agentChatService.sendTriggerMessage(newThreadId);
-    console.log('🔔 Trigger enviado en focus para thread:', newThreadId);
+    try {
+      // Enviar trigger al backend PRIMERO (nueva arquitectura)
+      await this.agentChatService.sendTriggerMessage(newThreadId);
+      console.log('✅ Trigger enviado exitosamente en focus:', newThreadId);
 
-    console.log('✅ Thread listo para recibir mensajes');
+      // SOLO si el backend responde OK, crear thread en frontend
+      await this.agentChatListService.createEmptyThreadWithId(newThreadId);
+      console.log('✨ Thread creado automáticamente en focus:', newThreadId);
+
+      console.log('✅ Thread listo para recibir mensajes');
+
+    } catch (error) {
+      console.error('❌ Error en focus - backend no disponible:', error);
+      // NO crear thread si el backend falló
+      // El usuario verá el textarea vacío sin thread
+    }
   }
 
   async sendMessage(message: string, showUserMessage: boolean = true): Promise<void> {
