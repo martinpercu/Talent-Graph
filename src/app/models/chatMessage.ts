@@ -3,3 +3,13 @@ export interface ChatMessage {
   message?: string;
   content?: string;
 }
+
+export interface ThreadHistoryResponse {
+  exists: boolean;
+  isEmpty: boolean;
+  hasUserMessages: boolean;
+  messageCount: number;
+  threadId: string;
+  lastUpdated: string | null;
+  messages: ChatMessage[];
+}

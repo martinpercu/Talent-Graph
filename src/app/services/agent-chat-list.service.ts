@@ -111,7 +111,7 @@ export class AgentChatListService {
   }
 
   // Genera un threadId único
-  private generateThreadId(): string {
+  generateThreadId(): string {
     const randomNum = Math.floor(Math.random() * 1000000); // 0 a 999999
     const userId = this.authService.getCurrentUserId();
     const shortUserId = userId!.substring(0, 6);
@@ -172,6 +172,40 @@ export class AgentChatListService {
     console.log(`✅ Thread vacío creado: "${name}"`);
 
     return threadId;
+  }
+
+  /**
+   * Crea un nuevo thread vacío con un threadId pre-generado
+   * (útil para el flujo: backend primero → Firestore después)
+   * @param threadId - ID pre-generado para el thread
+   * @param name - Nombre opcional para el thread (por defecto ". . .")
+   */
+  async createEmptyThreadWithId(threadId: string, name: string = '. . .'): Promise<void> {
+    const newThread: ChatThread = {
+      threadId,
+      name,
+      createdAt: new Date()
+    };
+
+    console.log(`✨ Creando thread con ID pre-generado: "${name}" (${threadId})`);
+
+    // Agregar al principio de la lista
+    const currentThreads = this.chatThreads();
+    currentThreads.unshift(newThread);
+    this.chatThreads.set([...currentThreads]);
+
+    // Seleccionar el nuevo thread
+    this.currentThreadId.set(threadId);
+
+    // ⚠️ NO guardar en Firestore si es ". . ." (thread temporal)
+    // Se guardará cuando el usuario envíe su primer mensaje y se renombre
+    if (name !== '. . .') {
+      await this.saveThreadsToFirestore(currentThreads);
+    } else {
+      console.log('⏸️ Thread temporal ". . ." NO guardado en Firestore (se guardará al renombrar)');
+    }
+
+    console.log(`✅ Thread con ID pre-generado creado: "${name}"`);
   }
 
   /**

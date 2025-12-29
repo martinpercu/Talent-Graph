@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '@env/environment';
-import { ChatMessage } from '@models/chatMessage';
+import { ChatMessage, ThreadHistoryResponse } from '@models/chatMessage';
 import { AuthService } from '@services/auth.service';
 import { RecruiterService } from '@services/recruiter.service';
 import { AgentChatListService } from '@services/agent-chat-list.service';
@@ -140,10 +141,42 @@ export class AgentChatService {
 
       readStream();
     })
-    .catch(error => {
+    .catch(async error => {
       console.error('❌ Error en fetch:', error);
-      chatMessages[responseIndex].message = "Error getting response. Please try again.";
-      onError("Error getting response. Please try again.");
+
+      // Verificar si el mensaje del usuario se guardó consultando el historial
+      try {
+        console.log('🔍 Verificando si el mensaje se guardó en el backend...');
+
+        const history = await firstValueFrom(
+          this.http.get<any>(
+            `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/history`,
+            { params: { limit: '5' } }  // Solo los últimos 5 mensajes
+          )
+        );
+
+        const messages = history?.messages || [];
+        const lastMessage = messages[messages.length - 1];
+
+        if (lastMessage?.role === 'user' && lastMessage?.message === message) {
+          // ✅ El mensaje SÍ se guardó, solo falló la respuesta del agente
+          console.log('✅ Mensaje guardado en backend - solo falló la respuesta del agente');
+          chatMessages[responseIndex].message =
+            "⚠️ Tu mensaje fue recibido, pero la respuesta se interrumpió. Por favor, pregunta de nuevo.";
+        } else {
+          // ❌ El mensaje NO se guardó
+          console.log('❌ Mensaje NO guardado en backend');
+          chatMessages[responseIndex].message =
+            "❌ Error al enviar el mensaje. Por favor, intenta de nuevo.";
+        }
+      } catch (verifyError) {
+        // No pudimos verificar (backend completamente caído)
+        console.error('❌ No se pudo verificar el estado del mensaje:', verifyError);
+        chatMessages[responseIndex].message =
+          "❌ Error de conexión. Verifica tu internet e intenta de nuevo.";
+      }
+
+      onError("Error in stream");
       onLoadingChange(false);
     });
   }
@@ -224,17 +257,14 @@ export class AgentChatService {
    * Obtiene el historial de mensajes de un thread desde el backend
    * @param threadId - ID del thread
    * @param limit - Límite de mensajes a obtener (por defecto 50)
-   * @returns Observable con el historial de mensajes
+   * @returns Observable con el historial de mensajes (con campos adicionales desde backend v2.0.0)
    */
   getThreadHistory(threadId: string, limit: number = 50) {
     const url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/history`;
 
     console.log('📜 Obteniendo historial del thread:', threadId, 'Límite:', limit);
 
-    return this.http.get<{
-      thread_id: string;
-      messages: ChatMessage[];
-    }>(url, {
+    return this.http.get<ThreadHistoryResponse>(url, {
       params: { limit: limit.toString() }
     });
   }

@@ -58,19 +58,32 @@ export class AgentChatsListComponent {
     // 1. Cerrar el sidebar PRIMERO (mejor UX - no se ve el parpadeo)
     this.visualStatesService.handleShowChatList();
 
-    // 2. Crear thread vacío
-    const newThreadId = await this.agentChatListService.createEmptyThread();
-    console.log('✨ Thread vacío creado:', newThreadId);
+    // 2. Generar threadId
+    const newThreadId = this.agentChatListService.generateThreadId();
+    console.log('🆔 ThreadId generado:', newThreadId);
 
-    // 3. Enviar mensaje trigger para cargar state en el backend
-    await this.agentChatService.sendTriggerMessage(newThreadId);
-    console.log('🔔 Trigger enviado para thread:', newThreadId);
+    try {
+      // 3. Enviar trigger al backend PRIMERO (nueva arquitectura)
+      await this.agentChatService.sendTriggerMessage(newThreadId);
+      console.log('✅ Trigger enviado exitosamente para thread:', newThreadId);
 
-    // 4. El thread ya está seleccionado (createEmptyThread lo hace)
-    // 5. Focus en el textarea para que el usuario pueda escribir
-    this.visualStatesService.triggerTextareaFocus();
+      // 4. SOLO si el backend responde OK, crear thread en frontend/Firestore
+      await this.agentChatListService.createEmptyThreadWithId(newThreadId);
+      console.log('✨ Thread creado en frontend:', newThreadId);
 
-    console.log('✅ Nuevo chat listo. Usuario puede escribir su primer mensaje.');
+      // 5. Focus en el textarea para que el usuario pueda escribir
+      this.visualStatesService.triggerTextareaFocus();
+
+      console.log('✅ Nuevo chat listo. Usuario puede escribir su primer mensaje.');
+
+    } catch (error) {
+      console.error('❌ Error al crear thread - backend no disponible:', error);
+
+      // Mostrar error al usuario
+      alert('El servidor no está disponible en este momento. Por favor, intenta más tarde.');
+
+      // NO crear thread en el frontend si el backend falló
+    }
   }
 
   // Renombrar un thread
