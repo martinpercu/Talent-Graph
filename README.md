@@ -1,4 +1,4 @@
-# Bridge To Works
+# TalentGraph
 
 AI-powered recruitment platform built with **Angular 19** and **LangGraph Agent Backend**. Features intelligent candidate screening with streaming AI conversations, automated resume analysis, and comprehensive recruiter dashboard for talent management.
 
@@ -454,13 +454,13 @@ npm install -g @angular/cli
 export const environment = {
   BACK_AGENT_BRIDGE: 'http://localhost:8000',  // LangGraph backend
   BACK_CHAT_URL: 'your-legacy-backend-url',
-  WEBSITE_NAME: 'Bridge To Works',
+  WEBSITE_NAME: 'TalentGraph',
   STRIPE_PUBLIC_KEY: 'pk_test_...',
   firebase: {
     apiKey: "your-api-key",
-    authDomain: "bridgetoworks.firebaseapp.com",
-    projectId: "bridgetoworks",
-    storageBucket: "bridgetoworks.appspot.com",
+    authDomain: "talent-graph.firebaseapp.com",
+    projectId: "talent-graph",
+    storageBucket: "talent-graph.appspot.com",
     messagingSenderId: "your-sender-id",
     appId: "your-app-id"
   }
@@ -508,7 +508,7 @@ uvicorn main:app --reload
 ### Firebase Configuration
 ```bash
 # Set default Firebase project
-firebase use bridgetoworks
+firebase use talent-graph
 
 # Deploy to Firebase Hosting
 firebase deploy
@@ -997,11 +997,10 @@ The project contains legacy educational platform code in:
 ## 🤝 Contributing
 
 Contributions welcome! Please:
-1. Read [CLAUDE.md](CLAUDE.md) for project context
-2. Review [docs/AGENT_ARCHITECTURE.md](docs/AGENT_ARCHITECTURE.md) for backend details
-3. Follow existing code conventions
-4. Test new features with Bruno collection (`/Bruno-Bridge-agent`)
-5. Update documentation for any new nodes or routes
+1. Review [docs/AGENT_ARCHITECTURE.md](docs/AGENT_ARCHITECTURE.md) for backend details
+2. Follow existing code conventions
+3. Test new features with Bruno collection (`/Bruno-Bridge-agent`)
+4. Update documentation for any new nodes or routes
 
 ### Backend Development
 
