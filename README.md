@@ -879,74 +879,6 @@ async streamResponse(message: string, threadId: string) {
 }
 ```
 
-## 📖 Development Roadmap
-
-### ✅ Completed (December 2025)
-
-**Core Agent Infrastructure:**
-- [x] LangGraph agent integration with StateGraph
-- [x] Streaming SSE responses (token-by-token)
-- [x] Thread management with PostgreSQL checkpointer
-- [x] PostgreSQL sync for jobs/resumes from Firebase
-- [x] Refactored API architecture (891 lines → modular)
-
-**Performance Optimizations:**
-- [x] Action triggers system (< 5ms detection)
-- [x] Silent loading (pre-load on mount)
-- [x] Fast paths (general conversation without DB)
-- [x] Context caching with smart invalidation
-- [x] JOIN optimization for job_name in resumes
-
-**Intelligence Features:**
-- [x] Interview question generator (personalized by candidate)
-- [x] Duplicate candidate detection & disambiguation
-- [x] Multi-language support (ES/EN/FR)
-- [x] Domain classification (Claude Haiku for speed)
-- [x] Intent detection (job/resume/general)
-
-### 🚧 In Progress
-
-**Frontend UI:**
-- [ ] Agent Chats List component (basic structure done)
-- [ ] Thread switching UI
-- [ ] Visual indicators for action triggers
-
-**Agent Features:**
-- [ ] Email generator (trigger implemented, generator pending)
-- [ ] Candidate comparison tool (trigger implemented, generator pending)
-
-### 🔮 Future Phases
-
-**Phase 1: Advanced Agent Actions**
-- [ ] Automated email drafting to candidates
-- [ ] Multi-candidate side-by-side comparison
-- [ ] Interview scheduling suggestions
-- [ ] Rejection letter templates
-
-**Phase 2: Semantic Search**
-- [ ] Vector embeddings for resumes (OpenAI embeddings)
-- [ ] Similarity search: "Find candidates like [name]"
-- [ ] Semantic skill matching beyond keywords
-- [ ] Resume clustering and insights
-
-**Phase 3: Multi-Agent System**
-- [ ] Screening agent (filters candidates automatically)
-- [ ] Interview agent (conducts preliminary screening)
-- [ ] Analytics agent (generates reports and insights)
-- [ ] Coordinator agent (orchestrates sub-agents)
-
-**Phase 4: Voice & Automation**
-- [ ] Voice-based agent interaction
-- [ ] Speech-to-text for recruiter input
-- [ ] Text-to-speech for responses
-- [ ] Automated interview scheduling with calendar integration
-
-**Phase 5: Platform Integrations**
-- [ ] ATS connectors (Greenhouse, Lever, Workday)
-- [ ] LinkedIn integration
-- [ ] Google Calendar / Outlook integration
-- [ ] Slack/Teams notifications
-
 ## 🎯 Production Features
 
 - ✅ **Real-time AI Chat**: LangGraph-powered agent with streaming
@@ -961,6 +893,7 @@ async streamResponse(message: string, threadId: string) {
 - ✅ **Action Triggers**: Fast path for questions, emails, comparisons
 - ✅ **Smart Caching**: Context invalidation for fresh data
 - ✅ **Duplicate Detection**: Intelligent candidate disambiguation
+- ✅ **Vector Embeddings**: OpenAI embeddings for semantic resume search
 
 ---
 
@@ -1113,9 +1046,7 @@ uv run uvicorn src.api.main:app --reload --port 8000
 - GitHub: [Contact maintainer for access]
 
 ### Related Documentation
-- [CLAUDE.md](CLAUDE.md) - Project context and guidelines
 - [docs/AGENT_ARCHITECTURE.md](docs/AGENT_ARCHITECTURE.md) - Detailed backend architecture
-- [docs/BACKEND_SETUP.md](docs/BACKEND_SETUP.md) - Backend installation guide
 
 ---
 
