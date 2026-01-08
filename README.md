@@ -14,17 +14,30 @@ This repository demonstrates a complete AI-driven recruitment platform with thre
 
 The recruitment intelligence is powered by a **production-ready LangGraph agent** with advanced features:
 
-- **StateGraph orchestration** with 12+ specialized nodes (trigger detection, context loading, duplicate resolution)
-- **Multi-model strategy**: GPT-4o-mini for conversations + Claude Haiku for fast classification
-- **Performance optimizations**: Action triggers (< 5ms), silent loading, context caching, smart invalidation
+- **StateGraph orchestration** with **19 specialized nodes** organized in 5 categories:
+  - Entry & Logging (2 nodes)
+  - Action Trigger System (6 nodes: trigger_checker, selection_resolver, question/email/comparison generators, direct_response)
+  - Context Management (4 nodes: silent_loader_checker, context_resolver, context_loader, context_enricher)
+  - Intent & Domain Routing (5 nodes: domain_checker, intent_checker, job/resume handlers, resume_matcher)
+  - LLM Invocation (2 nodes: general_talk, llm_node)
+- **8 conditional routes** for intelligent flow control (post_trigger_route, action_generator_route, context_resolver_route, etc.)
+- **Multi-model strategy**: GPT-4o-mini for conversations + Claude Haiku for fast classification (~50-100ms)
+- **Performance optimizations**:
+  - ⚡ Action triggers (< 5ms detection - frontend explicit 0ms, heuristic ~1ms)
+  - 🔇 Silent loading (~500ms one-time pre-load, then 0ms cached)
+  - 🚀 Fast path for general conversation (~1ms + LLM, no DB queries)
+  - 🔍 Context resolver with early termination (fuzzy matching 30% threshold)
+  - 📦 Context enricher in ALL paths before LLM (~0-6ms)
+  - 💾 Smart cache invalidation (domain=hr_related forces reload)
 - **PostgreSQL checkpointing** for conversation state persistence
 - **SSE streaming** for real-time token-by-token responses
 
 👉 **[Complete Backend Documentation →](docs/AGENT_ARCHITECTURE.md)** - Detailed technical guide covering:
-- LangGraph state machine design with conditional routing
-- 12 node implementations (trigger_checker, context_loader, question_generator, etc.)
-- Production safeguards (duplicate detection, context isolation, error recovery)
-- Performance metrics and optimization strategies
+- **5 Key Agent Flows**: Action Trigger Path, Silent Loading, Fast Path, HR Path, Context Resolver Path
+- **19 node implementations** with detailed logic and routing
+- **8 conditional routes** with decision logic tables
+- Production safeguards (duplicate detection, fuzzy matching 30%, context isolation, error recovery)
+- Performance metrics (< 5ms triggers, ~500ms context load, ~1ms fast path, ~962ms TTFT)
 - API endpoints and deployment guide
 
 ## 🧑‍💼 User Roles
@@ -904,7 +917,9 @@ Real-world latency measurements from production:
 | Operation | Latency | Notes |
 |-----------|---------|-------|
 | **Action Trigger Detection** | < 5ms | Frontend explicit: 0ms, Heuristic: ~1ms |
-| **Silent Loading** | ~500ms | One-time DB query on component mount |
+| **Silent Loading** | ~500ms → 0ms | One-time pre-load, then cached |
+| **Context Resolver** | ~0-50ms | Fuzzy matching for context detection |
+| **Context Enricher** | ~0-6ms | Enrichment in all paths |
 | **Fast Path (General)** | ~1ms + LLM | No DB queries for casual conversation |
 | **HR Path (First Load)** | ~500ms + LLM | Context loader with JOINs + analysis |
 | **HR Path (Cached)** | 0ms + LLM | Cache hit - no DB queries |
@@ -915,6 +930,8 @@ Real-world latency measurements from production:
 | **Domain Check (Heuristic)** | ~1ms | Short message fast path |
 | **Intent Detection** | ~100-150ms | GPT-4o-mini structured output |
 | **Question Generation** | ~2-3s | Personalized questions with context |
+| **Email Generation** | ~2-3s | Personalized emails with candidate data |
+| **Candidate Comparison** | ~50ms | Deterministic, no LLM (direct_response) |
 
 ### Optimization Impact
 
