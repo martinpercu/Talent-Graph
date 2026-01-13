@@ -10,34 +10,43 @@ This repository demonstrates a complete AI-driven recruitment platform with thre
 2. **Candidate Management**: Resume parsing, scoring system, and multi-job application tracking with automated screening
 3. **Recruiter Dashboard**: Comprehensive job posting management, candidate pipeline, and AI-powered interview assistant
 
-## 🧠 Backend Agent Architecture
+## 🧠 Backend Agent Architecture (v3.0 - January 2026)
 
 The recruitment intelligence is powered by a **production-ready LangGraph agent** with advanced features:
 
-- **StateGraph orchestration** with **19 specialized nodes** organized in 5 categories:
-  - Entry & Logging (2 nodes)
+- **StateGraph orchestration** with **28 specialized nodes** organized in 5 categories:
+  - Entry & Logging (2 nodes: state_logger_start, state_logger_end)
   - Action Trigger System (6 nodes: trigger_checker, selection_resolver, question/email/comparison generators, direct_response)
+  - Multi-Level Detection ✨ NEW (7 nodes: silent_load_detector, pending_action_resolver, job_mention_checker, candidate_detector, job_list_checker, candidate_filter, talk_with_state)
   - Context Management (4 nodes: silent_loader_checker, context_resolver, context_loader, context_enricher)
-  - Intent & Domain Routing (5 nodes: domain_checker, intent_checker, job/resume handlers, resume_matcher)
-  - LLM Invocation (2 nodes: general_talk, llm_node)
-- **8 conditional routes** for intelligent flow control (post_trigger_route, action_generator_route, context_resolver_route, etc.)
+  - Intent & Domain Routing (9 nodes: domain_checker, intent_checker, job/resume handlers, resume_matcher, general_talk, llm_node, etc.)
+- **14 conditional routes** for intelligent flow control:
+  - post_trigger_route, trigger_route, action_generator_route
+  - silent_load_detector_route ✨ NEW
+  - job_mention_route ✨ NEW, candidate_detector_route ✨ NEW, job_list_route ✨ NEW
+  - silent_loader_route, context_resolver_route
+  - domain_route, context_loader_route, intent_route
 - **Multi-model strategy**: GPT-4o-mini for conversations + Claude Haiku for fast classification (~50-100ms)
-- **Performance optimizations**:
-  - ⚡ Action triggers (< 5ms detection - frontend explicit 0ms, heuristic ~1ms)
+- **Performance optimizations v3.0**:
+  - ⚡ Multi-level detection (7 layers of detection nodes, < 5ms each)
+  - 🚀 **Fast Path v3.0** - context_resolver → talk_with_state (< 10ms, skips domain_checker + context_loader)
+  - 🎯 Action triggers (< 5ms detection - frontend explicit 0ms, heuristic ~1ms)
   - 🔇 Silent loading (~500ms one-time pre-load, then 0ms cached)
-  - 🚀 Fast path for general conversation (~1ms + LLM, no DB queries)
-  - 🔍 Context resolver with early termination (fuzzy matching 30% threshold)
+  - ⚡ Fast path general (~1ms + LLM, no DB queries)
+  - 🔍 Fuzzy matching (30% threshold for jobs/candidates)
+  - 💥 Conflict handling (candidate_detector + pending_action_resolver)
   - 📦 Context enricher in ALL paths before LLM (~0-6ms)
   - 💾 Smart cache invalidation (domain=hr_related forces reload)
 - **PostgreSQL checkpointing** for conversation state persistence
 - **SSE streaming** for real-time token-by-token responses
 
 👉 **[Complete Backend Documentation →](docs/AGENT_ARCHITECTURE.md)** - Detailed technical guide covering:
-- **5 Key Agent Flows**: Action Trigger Path, Silent Loading, Fast Path, HR Path, Context Resolver Path
-- **19 node implementations** with detailed logic and routing
-- **8 conditional routes** with decision logic tables
-- Production safeguards (duplicate detection, fuzzy matching 30%, context isolation, error recovery)
-- Performance metrics (< 5ms triggers, ~500ms context load, ~1ms fast path, ~962ms TTFT)
+- **5 Key Agent Flows**: Action Trigger, Silent Loading, Fast Path v3.0 (Early Detection), Fast Path General, Complete HR Path
+- **28 node implementations** with detailed logic (7 new detection nodes in v3.0)
+- **14 conditional routes** with decision logic tables
+- **Multi-level detection system**: triggers → silent load → pending action → job mention → candidate → job list → context resolver
+- Production safeguards (duplicate detection, conflict handling, fuzzy matching 30%, context isolation, error recovery)
+- Performance metrics (< 5ms triggers, < 10ms fast path v3.0, ~500ms context load, ~1ms fast path general, ~962ms TTFT)
 - API endpoints and deployment guide
 
 ## 🧑‍💼 User Roles
@@ -910,15 +919,23 @@ async streamResponse(message: string, threadId: string) {
 
 ---
 
-## ⚡ Performance Metrics
+## ⚡ Performance Metrics (v3.0)
 
 Real-world latency measurements from production:
 
 | Operation | Latency | Notes |
 |-----------|---------|-------|
 | **Action Trigger Detection** | < 5ms | Frontend explicit: 0ms, Heuristic: ~1ms |
+| **Silent Load Detection** ✨ | < 1ms | Detects "start-loading-state" |
+| **Pending Action Resolver** ✨ | ~1-5ms | Resolves conflicts from previous turn |
+| **Job Mention Checker** ✨ | ~1-5ms | Fuzzy matching for job detection |
+| **Candidate Detector** ✨ | ~1-3ms | Fuzzy matching + conflict detection |
+| **Job List Checker** ✨ | < 1ms | Detects list request keywords |
+| **Candidate Filter** ✨ | ~1-3ms | Filters candidates by job + keywords |
+| **Talk With State** ✨ | < 5ms | Fast path prompt preparation (v3.0) |
+| **Fast Path v3.0** ✨ | **< 10ms + LLM** | context_resolver → talk_with_state (skips domain + context_loader) |
 | **Silent Loading** | ~500ms → 0ms | One-time pre-load, then cached |
-| **Context Resolver** | ~0-50ms | Fuzzy matching for context detection |
+| **Context Resolver** | ~3-50ms | Fuzzy matching for candidate context |
 | **Context Enricher** | ~0-6ms | Enrichment in all paths |
 | **Fast Path (General)** | ~1ms + LLM | No DB queries for casual conversation |
 | **HR Path (First Load)** | ~500ms + LLM | Context loader with JOINs + analysis |

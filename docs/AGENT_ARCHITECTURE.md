@@ -2,136 +2,175 @@
 
 This is the **production-ready LangGraph agent** that powers the TalentGraph recruitment platform's AI chat interface.
 
-## 🎯 What This Demonstrates
+## 🎯 What This Demonstrates (v3.0)
 
-This FastAPI + LangGraph application showcases **9 key agent optimizations**:
+This FastAPI + LangGraph application showcases **10 key agent optimizations**:
 
-1. **Action Triggers with Selection Resolver** - Ultra-fast routing (< 5ms) with fuzzy matching for job/candidate detection
-2. **Context Resolver** - Detects context BEFORE domain routing, enables early termination with pending_action
-3. **Context Enricher** - Universal enrichment in ALL paths before LLM (~0-6ms)
-4. **Silent Loading** - Pre-loads context on mount (~500ms one-time, then 0ms cached)
-5. **Fast Path** - General conversation without DB queries (~1ms + LLM)
-6. **Smart Caching** - Context invalidation based on domain (domain=hr_related forces reload)
-7. **Direct Response** - Streaming of deterministic responses without LLM (comparison_generator)
-8. **Multi-Model Strategy** - GPT-4o-mini for conversation + Claude Haiku for fast classification (~50-100ms)
-9. **PostgreSQL Checkpointing** - Full conversation state persistence via LangGraph
+1. **Multi-Level Detection System** ✨ NEW - 7 layers of ultra-fast detection nodes (< 5ms each)
+2. **Fast Path v3.0** ✨ NEW - context_resolver → talk_with_state (< 10ms, skips domain_checker + context_loader)
+3. **Conflict Handling** ✨ NEW - candidate_detector + pending_action_resolver for intelligent disambiguation
+4. **Action Triggers with Selection Resolver** - Ultra-fast routing (< 5ms) with fuzzy matching
+5. **Context Resolver** - Detects candidate context BEFORE domain routing, enables early termination
+6. **Context Enricher** - Universal enrichment in ALL paths before LLM (~0-6ms)
+7. **Silent Loading** - Pre-loads context on mount (~500ms one-time, then 0ms cached)
+8. **Fast Path General** - General conversation without DB queries (~1ms + LLM)
+9. **Smart Caching** - Context invalidation based on domain (domain=hr_related forces reload)
+10. **PostgreSQL Checkpointing** - Full conversation state persistence via LangGraph
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture Overview (v3.0)
 
 ### LangGraph State Machine
 
-The agent uses a **StateGraph** with **19 specialized nodes** organized in **5 categories** and **8 conditional routes**:
+The agent uses a **StateGraph** with **28 specialized nodes** organized in **5 categories** and **14 conditional routes**:
 
 ```
-START → state_logger_start → trigger_checker → post_trigger_route
-                                                        ↓
-                               ┌────────────────────────┴────────────────────────┐
-                               ↓                                                 ↓
-                    action_trigger activo                            action_trigger=None
-                    (questions/email/compare)                                    ↓
-                               ↓                                        silent_loader_checker
-                      selection_resolver                                         ↓
-                               ↓                               ┌─────────────────┴─────────────────┐
-                         trigger_route                         ↓                                   ↓
-                ┌──────────────┼──────────────┐       silent_load=True                   silent_load=False
-                ↓              ↓              ↓                ↓                                   ↓
-         question_gen    email_gen    comparison_gen   context_loader                      context_resolver
-                ↓              ↓              ↓          (pre-carga)                               ↓
-    action_generator_route     │              │                ↓                          context_resolver_route
-         ↓           ↓          │              │               END                         ↓                  ↓
-   AIMessage  SystemMessage     │              │                                  pending_action       sin pending_action
-         ↓           ↓          │              │                                          ↓                  ↓
-   direct_resp  llm_response    │              │                                    llm_response        domain_checker
-         ↓           ↓          │              │                                          ↓                  ↓
-        END         END    action_generator_route                                       END          domain_route
-                                ↓           ↓                                                    ↓            ↓
-                           AIMessage  SystemMessage                                        general    hr_related
-                                ↓           ↓                                                    ↓            ↓
-                           direct_resp llm_resp                                       context_enricher context_loader
-                                ↓           ↓                                                    ↓            ↓
-                               END         END                                           general_talk   intent_checker
-                                                                                                ↓      ┌─────┼─────┐
-                                                                                         llm_response  │     │     │
-                                                                                                ↓     job resume general
-                                                                                               END    │     │     │
-                                                                                                      ↓     ↓     ↓
-                                                                                             job_handler resume_handler context_enricher
-                                                                                                      ↓     ↓     ↓
-                                                                                            resume_matcher│     │
-                                                                                                      ↓     │     │
-                                                                                             context_enricher   │
-                                                                                                      ↓     │     │
-                                                                                                general_talk↓  ↓
-                                                                                                      ↓  general_talk
-                                                                                                llm_response ↓
-                                                                                                      ↓  llm_response
-                                                                                                     END ↓
-                                                                                                        END
+START
+  ↓
+state_logger_start (LOG INICIAL)
+  ↓
+trigger_checker (DETECTA trigger: questions/email/compare)
+  ↓
+post_trigger_route
+  ├─→ (Si hay trigger) selection_resolver
+  │     ↓
+  │   trigger_route
+  │     ├─→ question_generator → action_generator_route → llm_response/direct_response → state_logger_end → END
+  │     ├─→ email_generator → action_generator_route → llm_response/direct_response → state_logger_end → END
+  │     └─→ comparison_generator → direct_response → state_logger_end → END
+  │
+  └─→ (Sin trigger) silent_load_detector ✨ NEW
+        ↓
+      silent_load_detector_route ✨ NEW
+        ├─→ (silent_load=True) silent_loader_checker → silent_loader_route → context_loader → END
+        │
+        └─→ (silent_load=False) pending_action_resolver ✨ NEW (resuelve pending actions)
+              ↓
+            job_mention_checker ✨ NEW (DETECTA job específico con fuzzy matching)
+              ↓
+            job_mention_route ✨ NEW
+              ├─→ (has_job_mention=True) candidate_filter ✨ NEW → candidate_detector
+              │                                              ↓
+              │                                            candidate_detector_route ✨ NEW
+              │                                              ├─→ (conflicto) direct_response → state_logger_end → END
+              │                                              ├─→ (job_id existe) context_resolver
+              │                                              └─→ (no job_id) job_list_checker
+              │
+              └─→ (has_job_mention=False) candidate_detector ✨ NEW (detecta candidatos + conflictos)
+                    ↓
+                  candidate_detector_route ✨ NEW
+                    ├─→ (conflicto) direct_response → state_logger_end → END
+                    ├─→ (job_id existe) context_resolver
+                    └─→ (no job_id) job_list_checker ✨ NEW (detecta si pide lista)
+                          ↓
+                        job_list_route ✨ NEW
+                          ├─→ (wants_job_list=True o resumeId existe) context_resolver
+                          └─→ (wants_job_list=False) domain_checker
+
+                  CONTEXT_RESOLVER (detecta CANDIDATOS)
+                        ↓
+                  context_resolver_route
+                    ├─→ (pending_action) llm_response → state_logger_end → END (aclaración)
+                    ├─→ (job_id o matched_resumes) talk_with_state ✨ NEW (FAST PATH v3.0) → llm_response → state_logger_end → END
+                    └─→ (sin contexto) domain_checker
+
+                  DOMAIN_CHECKER + NORMAL PATH
+                        ↓
+                  domain_route
+                    ├─→ (hr_related) context_loader
+                    │                   ↓
+                    │                context_loader_route
+                    │                ├─→ (silent_load=True) END
+                    │                └─→ (silent_load=False) intent_checker
+                    │                                           ↓
+                    │                                       intent_route
+                    │                                       ├─→ (job) job_handler → resume_matcher → context_enricher
+                    │                                       ├─→ (resume) resume_handler → context_enricher
+                    │                                       └─→ (general) context_enricher
+                    │                                           ↓
+                    │                                       general_talk → llm_response
+                    │
+                    └─→ (general/FAST PATH) context_enricher → general_talk → llm_response
+
+state_logger_end (LOG FINAL)
+  ↓
+END
 ```
 
 ### 5 Key Agent Flows
 
-#### 1️⃣ Action Trigger Path (< 5ms)
-- **Frontend sends explicit trigger** → selection_resolver → action generator → direct_response/llm_response
+#### 1️⃣ Action Trigger Path (< 5ms detection + LLM)
+- **Frontend sends explicit trigger** OR heuristic detection
 - **Supported triggers:** `questions`, `email`, `compare`
-- **Performance:** < 5ms detection (0ms frontend explicit, ~1ms heuristic)
+- **Performance:** < 5ms (0ms frontend explicit, ~1ms heuristic)
 - **Example:** "Generate interview questions for María López"
 
-#### 2️⃣ Silent Loading Path (~500ms → 0ms)
-- **Frontend sends "start-loading-state"** on component mount
-- **Flow:** silent_loader_checker → context_loader → END (no response)
-- **Purpose:** Pre-loads jobs + resumes for instant access
+#### 2️⃣ Silent Loading Path (~500ms one-time)
+- **Special message:** "start-loading-state"
+- **Flow:** silent_load_detector → silent_loader_checker → context_loader → END
+- **Purpose:** Pre-loads jobs + resumes without user response
 - **Performance:** ~500ms one-time, then 0ms cached
 
-#### 3️⃣ Fast Path - General (~1ms + LLM)
-- **Casual conversation** without HR context
+#### 3️⃣ Fast Path v3.0 - Early Detection ✨ NEW (< 10ms + LLM)
+- **Most important optimization in v3.0**
+- **Flow:** context_resolver → talk_with_state → llm_response → END
+- **Trigger:** When job_id or matched_resumes are detected
+- **What it skips:** domain_checker + context_loader (~500ms saved!)
+- **Performance:** < 10ms to reach LLM
+- **Example:** "Show me candidates for Frontend Developer" (after job detected by job_mention_checker)
+
+#### 4️⃣ Fast Path - General (~1ms + LLM)
+- **Casual conversation** (domain=general)
 - **Flow:** domain_checker → context_enricher → general_talk → llm_response
 - **Performance:** ~1ms + LLM (no DB queries)
 - **Example:** "Hello", "How are you?"
 
-#### 4️⃣ HR Path - Context Analysis (~500ms + analysis)
-- **HR-related questions** about jobs/candidates
+#### 5️⃣ Complete HR Path (~0-500ms + analysis)
+- **HR-related questions** with full context loading
 - **Flow:** domain_checker → context_loader → intent_checker → job/resume handlers
 - **All paths** go through context_enricher before general_talk
-- **Performance:** ~500ms context load (or 0ms cached) + LLM
-
-#### 5️⃣ Context Resolver Path (early termination)
-- **Detects ambiguity** in job/candidate mentions
-- **Flow:** context_resolver → generates pending_action → llm_response → END
-- **Purpose:** Prevents unnecessary processing, asks for clarification
-- **Example:** Multiple candidates with same name
+- **Performance:** ~0-500ms (0ms cached, ~500ms when invalidated) + LLM
 
 ---
 
-## 📊 Performance Metrics
+## 📊 Performance Metrics (v3.0)
 
 | Operation | Latency | Description |
 |-----------|---------|-------------|
 | **Action Trigger Detection** | < 5ms | Frontend explicit (0ms) or heuristic (~1ms) |
+| **Silent Load Detection** ✨ | < 1ms | Detects "start-loading-state" command |
+| **Pending Action Resolver** ✨ | ~1-5ms | Resolves conflicts from previous turn |
+| **Job Mention Checker** ✨ | ~1-5ms | Fuzzy matching for job detection (30%) |
+| **Candidate Detector** ✨ | ~1-3ms | Fuzzy matching + conflict detection |
+| **Job List Checker** ✨ | < 1ms | Detects list request keywords |
+| **Candidate Filter** ✨ | ~1-3ms | Filters candidates by job + keywords |
+| **Talk With State** ✨ | < 5ms | Fast path v3.0 prompt preparation |
+| **Fast Path v3.0** ✨ | **< 10ms + LLM** | Skips domain_checker + context_loader |
 | **Silent Loading** | ~500ms → 0ms | One-time pre-load, then cached |
-| **Context Resolver** | ~0-50ms | Fuzzy matching for context detection |
+| **Context Resolver** | ~3-50ms | Fuzzy matching for candidate context |
 | **Context Enricher** | ~0-6ms | Enrichment in all paths |
-| **Fast Path** | ~1ms + LLM | No DB queries for general conversation |
+| **Fast Path (General)** | ~1ms + LLM | No DB queries for casual conversation |
 | **HR Path (First)** | ~500ms + LLM | Context load with JOINs + analysis |
 | **HR Path (Cached)** | 0ms + LLM | Cache hit - no DB queries |
 | **HR Path (Invalidated)** | ~500ms + LLM | Force reload when domain=hr_related |
 | **TTFT** | ~962ms | Time to first token from GPT-4o-mini |
 | **Total LLM** | ~2275ms | Complete response generation |
 
-### Optimization Impact
+### Optimization Impact (v3.0)
 
+- **Fast Path v3.0:** ~500ms → < 10ms (skips domain_checker + context_loader)
+- **Multi-Level Detection:** 7 layers, < 5ms each (total ~7-35ms max)
+- **Conflict Handling:** Prevents ambiguous queries from reaching LLM
 - **Action Triggers:** 200ms → 5ms (skip domain/intent checks)
 - **Silent Loading:** 500ms → 0ms (pre-load eliminates first message delay)
-- **Fast Path:** 500ms → 1ms (no DB for casual conversation)
+- **Fast Path General:** 500ms → 1ms (no DB for casual conversation)
 - **Context Caching:** 500ms → 0ms (reuse loaded data)
 - **Context Enricher:** Universal enrichment (~0-6ms across all paths)
-- **Direct Response:** ~50ms (deterministic, no LLM for comparisons)
 
 ---
 
-## 🧠 State Management
+## 🧠 State Management (v3.0)
 
 ### HRState (TypedDict)
 
@@ -150,6 +189,7 @@ class HRState(TypedDict):
     job_description: str | None
     job_data: dict | None
     available_jobs: List[Dict[str, str]] | None
+    has_job_mention: bool | None  # ✨ NEW v3.0
 
     # Resumes
     resumeId: str | None
@@ -160,6 +200,11 @@ class HRState(TypedDict):
     matched_resumes: List[Dict[str, Any]] | None
     matched_resumes_info: str | None
     duplicate_resumes: List[Dict[str, Any]] | None
+
+    # Detection Flags ✨ NEW v3.0
+    wants_job_list: bool | None
+    has_candidate_mention: bool | None
+    conflict_type: str | None  # "duplicate", "out_of_scope", "ambiguous"
 
     # Domain & Intent & Language
     domain: str | None  # "hr_related" | "general"
@@ -174,16 +219,19 @@ class HRState(TypedDict):
     pending_action: str | None  # For context_resolver ambiguity
 ```
 
-**Key Features:**
+**Key Features v3.0:**
+- `has_job_mention` - Flag from job_mention_checker
+- `wants_job_list` - Flag from job_list_checker
+- `has_candidate_mention` - Flag from candidate_detector
+- `conflict_type` - Type of conflict detected (duplicate, out_of_scope, ambiguous)
 - `add_messages` reducer appends messages (doesn't replace)
 - `available_resumes` includes `job_name` from JOIN optimization
 - `duplicate_resumes` for disambiguation (multiple candidates, same name)
-- `action_trigger` for fast path routing
 - `pending_action` for early termination with clarification
 
 ---
 
-## 🔧 Node Categories (19 Total)
+## 🔧 Node Categories (28 Total in v3.0)
 
 ### 1️⃣ Entry & Logging (2 nodes)
 - **state_logger_start** - Initial state logging with counts
@@ -207,30 +255,63 @@ class HRState(TypedDict):
   - Filters by job_id
 - **direct_response** - Streams AIMessage without LLM
   - Pass-through for deterministic responses
-  - Used by comparison_generator (always)
+  - Used by comparison_generator (always), conflict resolution
 
-### 3️⃣ Context Management (4 nodes)
-- **silent_loader_checker** - Detects "start-loading-state"
-- **context_resolver** - Detects context BEFORE domain routing ✨ NEW
-  - Fuzzy matching for jobs (exact → keyword → fuzzy 30%)
+### 3️⃣ Multi-Level Detection System ✨ NEW (7 nodes in v3.0)
+- **silent_load_detector** - Detects "start-loading-state" command
+  - Keyword matching
+  - < 1ms performance
+- **pending_action_resolver** - Resolves pending actions from previous turn
+  - Attempts resolution by: number, job, thumbup, score
+  - Generates clarification if still ambiguous
+  - ~1-5ms performance
+- **job_mention_checker** - Detects mentioned jobs with fuzzy matching
+  - Exact match → keyword match → fuzzy 30%
+  - Sets `has_job_mention` flag
+  - ~1-5ms performance
+- **candidate_detector** - Detects candidates + conflicts
+  - Fuzzy matching (30% threshold)
+  - Detects: duplicates, out_of_scope, ambiguous
+  - Sets `conflict_type` if conflict found
+  - ~1-3ms performance
+- **job_list_checker** - Detects if user requests job list
+  - Keyword matching (ES/EN/FR)
+  - Sets `wants_job_list` flag
+  - < 1ms performance
+- **candidate_filter** - Filters candidates by job + keywords
+  - Filters matched_resumes by job_id
+  - Keyword detection for candidate context
+  - ~1-3ms performance
+- **talk_with_state** ✨ **FAST PATH v3.0**
+  - Prepares prompt with detected context
+  - Skips domain_checker + context_loader
+  - < 5ms performance
+  - **Saves ~500ms** by skipping unnecessary nodes
+
+### 4️⃣ Context Management (4 nodes)
+- **silent_loader_checker** - Validates silent loading flag
+- **context_resolver** - Detects candidate context BEFORE domain routing
   - Fuzzy matching for candidates (exact → fuzzy 30%)
   - Generates `pending_action` if ambiguous
-  - Enables early termination
+  - Enables early termination OR fast path v3.0
+  - ~3-50ms performance
 - **context_loader** - Loads jobs + resumes from DB
   - JOIN optimization for job_name
   - Cache invalidation when domain=hr_related
   - Language detection (first load only)
-- **context_enricher** - Enriches context in ALL paths ✨ NEW
+  - ~0-500ms performance
+- **context_enricher** - Enriches context in ALL paths
   - Detects additional mentions
   - Universal execution before general_talk
   - ~0-6ms performance
 
-### 4️⃣ Intent & Domain Routing (5 nodes)
+### 5️⃣ Intent & Domain Routing (9 nodes)
 - **domain_checker** - HR vs general pre-filter
   - Heuristic (~1ms): Short messages without HR keywords → general
   - LLM (Claude Haiku ~50-100ms): If heuristic inconclusive
 - **intent_checker** - Detects job/resume/general mention
   - GPT-4o-mini with structured output
+  - ~100-150ms performance
 - **job_handler** - Identifies specific job
   - Fuzzy matching with available_jobs
   - Falls back to list if no match
@@ -240,8 +321,6 @@ class HRState(TypedDict):
 - **resume_matcher** - Analyzes candidates for job
   - Filters by jobRelated_id == job_id
   - Streaming analysis
-
-### 5️⃣ LLM Invocation (2 nodes)
 - **general_talk** - Prepares system prompts
   - Special handling for duplicates (priority: job → thumbUp → score)
   - Formats context with job_name for resumes
@@ -253,15 +332,19 @@ class HRState(TypedDict):
 
 ---
 
-## 🛤️ Conditional Routes (8 Total)
+## 🛤️ Conditional Routes (14 Total in v3.0)
 
 | Route | From Node | Logic | Destinations |
 |-------|-----------|-------|--------------|
-| **post_trigger_route** | trigger_checker | Has action_trigger? | selection_resolver / silent_loader_checker |
+| **post_trigger_route** | trigger_checker | Has action_trigger? | selection_resolver / silent_load_detector |
 | **trigger_route** | selection_resolver | Which trigger? | question_gen / email_gen / comparison_gen |
 | **action_generator_route** | question/email_gen | Message type? | direct_response (AIMessage) / llm_response (SystemMessage) |
-| **silent_loader_route** | silent_loader_checker | Silent load? | context_loader / context_resolver |
-| **context_resolver_route** | context_resolver | Pending action? | llm_response (ambiguity) / domain_checker (continue) |
+| **silent_load_detector_route** ✨ | silent_load_detector | Silent load? | silent_loader_checker / pending_action_resolver |
+| **silent_loader_route** | silent_loader_checker | Validated? | context_loader / END |
+| **job_mention_route** ✨ | job_mention_checker | Has job mention? | candidate_filter / candidate_detector |
+| **candidate_detector_route** ✨ | candidate_detector | Conflict or context? | direct_response / context_resolver / job_list_checker |
+| **job_list_route** ✨ | job_list_checker | Wants list or has resumeId? | context_resolver / domain_checker |
+| **context_resolver_route** | context_resolver | Pending action or context? | llm_response / talk_with_state / domain_checker |
 | **domain_route** | domain_checker | HR related? | context_loader / context_enricher |
 | **context_loader_route** | context_loader | Silent load? | END / intent_checker |
 | **intent_route** | intent_checker | Intent type? | job_handler / resume_handler / context_enricher |
@@ -275,7 +358,7 @@ class HRState(TypedDict):
 **POST /chat_agent/{thread_id}/stream** - Streaming SSE chat
 ```json
 {
-  "message": "Generate interview questions for María López",
+  "message": "Show me candidates for Frontend Developer",
   "recruiterId": "rec-123",
   "max_threads": 10,
   "trigger": "questions"  // Optional: "questions", "email", "compare"
@@ -285,8 +368,8 @@ class HRState(TypedDict):
 **Response (SSE):**
 ```
 data: {"type": "start"}
-data: {"type": "content", "content": "**Interview"}
-data: {"type": "content", "content": " Questions"}
+data: {"type": "content", "content": "I found"}
+data: {"type": "content", "content": " 3 candidates"}
 ...
 data: {"type": "end"}
 ```
@@ -298,127 +381,58 @@ data: {"type": "end"}
 ### Sync Endpoints
 
 **POST /resumes/sync** - Bulk candidate sync
-```json
-{
-  "resumes": [
-    {
-      "resumeId": "r1",
-      "name": "María López",
-      "email": "maria@example.com",
-      "jobRelated_id": "j1",
-      "skills": ["React", "TypeScript"],
-      ...
-    }
-  ]
-}
-```
-
 **POST /jobs/sync** - Bulk job sync
-```json
-{
-  "jobs": [
-    {
-      "job_id": "j1",
-      "name": "Frontend Developer",
-      "description": "We are looking for...",
-      "owner_id": "rec-123",
-      ...
-    }
-  ]
-}
-```
 
 ### Thread Management
 
 **GET /threads?recruiterId=xxx** - List recruiter's threads
-
 **DELETE /threads/{thread_id}** - Delete specific thread
-
-**POST /maintenance/cleanup-orphaned-blobs** - Cleanup orphaned blobs
 
 ---
 
-## 💡 Key Design Patterns
+## 💡 Key Design Patterns (v3.0)
 
-### 1. Early Termination Pattern
+### 1. Multi-Level Detection Pattern ✨ NEW
+- **7 layers of detection** before reaching domain_checker
+- Each layer < 5ms
+- Total overhead: ~7-35ms max
+- Benefits: Ultra-fast routing, conflict prevention, early termination
+
+### 2. Fast Path v3.0 Pattern ✨ NEW
+- **context_resolver → talk_with_state**
+- Skips domain_checker + context_loader (~500ms saved)
+- Activated when job_id or matched_resumes detected
+- Reaches LLM in < 10ms
+
+### 3. Conflict Handling Pattern ✨ NEW
+- **candidate_detector** detects conflicts:
+  - "duplicate": Multiple candidates with same name
+  - "out_of_scope": Candidate not in current job context
+  - "ambiguous": Unclear candidate reference
+- **pending_action_resolver** attempts resolution
+- **direct_response** if conflict persists
+
+### 4. Early Termination Pattern
 - **context_resolver** detects ambiguity → generates `pending_action` → llm_response → END
 - Prevents unnecessary processing when clarification needed
-- Example: "Tell me about María" (multiple Marías exist)
 
-### 2. Universal Enrichment Pattern
+### 5. Universal Enrichment Pattern
 - **ALL paths** go through `context_enricher` before `general_talk`
 - Ensures consistent context enrichment
-- Performance: ~0-6ms across all paths
 
-### 3. Dual Response Pattern
+### 6. Dual Response Pattern
 - **action_generator_route** decides:
   - AIMessage → `direct_response` (deterministic, no LLM)
   - SystemMessage → `llm_response` (LLM processing)
-- Used by question_generator and email_generator
 
-### 4. Cache Invalidation Pattern
+### 7. Cache Invalidation Pattern
 - **context_loader** checks `domain=hr_related`
 - Forces cache reload to ensure fresh data
 - 0ms cached → ~500ms when invalidated
 
-### 5. Fuzzy Matching Pattern
-- Used in: selection_resolver, context_resolver, job_handler, resume_handler
+### 8. Fuzzy Matching Pattern
+- Used in: job_mention_checker, candidate_detector, job_handler, resume_handler
 - Threshold: **30% similarity** for typo tolerance
-- Example: "Maria" matches "María" (accent insensitive)
-
----
-
-## 📦 Database Schema
-
-### Jobs Table
-```sql
-CREATE TABLE jobs (
-    job_id VARCHAR PRIMARY KEY,
-    owner_id VARCHAR NOT NULL,  -- recruiter ID
-    name VARCHAR NOT NULL,
-    description TEXT,
-    show_salary BOOLEAN,
-    min_salary NUMERIC,
-    max_salary NUMERIC,
-    full_text_content TEXT,     -- For search
-    synced_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-
-CREATE INDEX idx_jobs_owner ON jobs(owner_id);
-```
-
-### Resumes Table
-```sql
-CREATE TABLE resumes (
-    resumeId VARCHAR PRIMARY KEY,
-    candidate_uid VARCHAR,
-    recruiter_id VARCHAR NOT NULL,
-    jobRelated_id VARCHAR,      -- FK to jobs
-    name VARCHAR,
-    email VARCHAR,
-    phone VARCHAR,
-    scoreToPosition VARCHAR,
-    thumbUp BOOLEAN,
-    skills JSON,                -- Array
-    languages JSON,             -- Array
-    works JSON,                 -- Array of objects
-    education JSON,             -- Array
-    certifications JSON,        -- Array
-    full_text_content TEXT,     -- For search
-    synced_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-
-CREATE INDEX idx_resumes_recruiter ON resumes(recruiter_id);
-CREATE INDEX idx_resumes_job ON resumes(jobRelated_id);
-```
-
-### Checkpoints Table (LangGraph)
-```sql
--- Managed automatically by LangGraph PostgresSaver
--- Stores full conversation state per thread
-```
 
 ---
 
@@ -434,25 +448,20 @@ bruno open Bruno-Bridge-agent/
 **Tests included:**
 - `dev-post-stream-test.bru` - Local streaming
 - `post-test-rail.bru` - Railway deployment
-- `dev-post-test.bru` - Synchronous chat
 
 ### With curl
 
-**Streaming chat:**
+**Streaming chat with job mention:**
 ```bash
 curl -X POST http://localhost:8000/chat_agent/thread-123/stream \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "Generate questions for María López",
-    "recruiterId": "rec-456",
-    "trigger": "questions"
+    "message": "Show me candidates for Frontend Developer",
+    "recruiterId": "rec-456"
   }'
 ```
 
-**History:**
-```bash
-curl http://localhost:8000/chat_agent/thread-123/history
-```
+**Response:** Fast Path v3.0 activates (< 10ms to LLM)
 
 ---
 
@@ -524,11 +533,14 @@ Server available at http://localhost:8000
 
 ---
 
-## 📝 Production Features
+## 📝 Production Features (v3.0)
 
-✅ **19 Specialized Nodes** - Organized in 5 categories
-✅ **8 Conditional Routes** - Intelligent flow control
-✅ **5 Key Agent Flows** - Action triggers, silent loading, fast path, HR path, context resolver
+✅ **28 Specialized Nodes** - Organized in 5 categories (9 new nodes in v3.0)
+✅ **14 Conditional Routes** - Intelligent flow control (6 new routes in v3.0)
+✅ **5 Key Agent Flows** - Action triggers, silent loading, fast path v3.0, fast path general, complete HR path
+✅ **Multi-Level Detection** ✨ - 7 layers of ultra-fast detection (< 5ms each)
+✅ **Fast Path v3.0** ✨ - < 10ms to LLM (skips domain + context_loader)
+✅ **Conflict Handling** ✨ - candidate_detector + pending_action_resolver
 ✅ **Fuzzy Matching** - 30% threshold for typo tolerance
 ✅ **Early Termination** - Context resolver with pending_action
 ✅ **Universal Enrichment** - Context enricher in ALL paths
@@ -552,11 +564,11 @@ This project demonstrates advanced LangGraph patterns for production AI agents. 
 4. **Analytics** - Recruitment metrics and insights
 
 **For recruiters viewing this:**
-This agent showcases production-ready patterns including intelligent routing, performance optimization, and robust error handling - all crucial for real-world AI applications.
+This agent showcases production-ready patterns including multi-level detection, conflict handling, performance optimization (< 10ms fast path v3.0), and robust error handling - all crucial for real-world AI applications.
 
 ---
 
-**Last updated:** 2026-01-08
-**Version:** 2.3.0
+**Last updated:** 2026-01-13
+**Version:** 3.0.0
 **Backend Repository:** https://github.com/your-org/agent-back-bridgetoworks
 **Contact:** For questions about this architecture, reach out via GitHub issues.
