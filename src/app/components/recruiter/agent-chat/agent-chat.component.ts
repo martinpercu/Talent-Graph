@@ -51,9 +51,9 @@ export class AgentChatComponent implements OnInit {
   speakIsEnabled: boolean = false; // Controla si TTS está activado
   // End Voice
 
-  message_1: string = "Mensage 1"
-  message_2: string = "Mensage 2"
-  message_3: string = "easy"
+  message_1: string = "email"
+  message_2: string = "question"
+  message_3: string = "compare"
   message_4: string = "hard"
 
   // Para rastrear el thread anterior
@@ -250,9 +250,9 @@ export class AgentChatComponent implements OnInit {
     this.previousThreadId = threadId;
   }
 
-  toggleShowLeftMenuHeader() {
-    this.visualStatesService.togleShowLeftMenu()
-  }
+  // toggleShowLeftMenuHeader() {
+  //   this.visualStatesService.togleShowLeftMenu()
+  // }
 
 
   scrollToBottomFromArrow(): void {
@@ -452,6 +452,8 @@ export class AgentChatComponent implements OnInit {
 
   toggleSpeak(): void {
     this.speakIsEnabled = !this.speakIsEnabled;
+    console.log('el speack esta ==> ' + this.speakIsEnabled);
+    
   }
 
   async clearChatHistory(): Promise<void> {
@@ -490,10 +492,14 @@ export class AgentChatComponent implements OnInit {
 
   // Nueva función para reproducir texto como voz
   speakText(text: string): void {
+    console.log("in Speack TEXT ==>" + text);
+    
+    if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
+
     // VERY IMPORTANT ===> Clean the tail ==>  LIMPIAR LA COLA DE SPEECH!!!
     window.speechSynthesis.cancel(); // clean the reproduction queu
+    // if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
 
-    if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US'; // Idioma Inglés (puedes cambiar a 'es-US' u otros)
     utterance.volume = 1; // Volumen (0 a 1)

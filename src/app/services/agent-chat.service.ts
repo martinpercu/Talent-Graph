@@ -77,7 +77,10 @@ export class AgentChatService {
             const the_message_finished = chatMessages[responseIndex].message;
 
             if (typeof the_message_finished === 'string' && the_message_finished.trim() !== '') {
+              console.log("🔊 LLAMANDO A onSpeakText con:", the_message_finished.substring(0, 50) + "...");
               onSpeakText(the_message_finished);
+            } else {
+              console.log("⚠️ NO se llama a onSpeakText - mensaje vacío o no es string");
             }
             return;
           }
@@ -111,7 +114,7 @@ export class AgentChatService {
 
                   if (data.content === currentMessage) {
                     console.log('⚠️ Chunk duplicado detectado (mensaje completo) - IGNORADO');
-                    return; // No agregar el chunk duplicado
+                    continue; // Saltar esta iteración del loop, no terminar toda la función
                   }
 
                   chatMessages[responseIndex].message += data.content;
