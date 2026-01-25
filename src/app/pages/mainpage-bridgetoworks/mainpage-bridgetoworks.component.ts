@@ -5,6 +5,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 
+// For DEMO
+import { RecruiterAuthService } from '@services/recruiter-auth.service';
+
+
 @Component({
   selector: 'app-mainpage-bridgetoworks',
   imports: [MatIconModule, TranslocoPipe],
@@ -16,10 +20,46 @@ export class MainpageBridgetoworksComponent {
 
   appName: string = environment.WEBSITE_NAME;
 
+  // For DEMO
+  demoApp: boolean = false
+  recruiterAuthService = inject(RecruiterAuthService);
+  errorMessage: string | null = null;
+
+  ngOnInit() {
+    console.log(this.demoApp);
+    if(this.appName == "TalentGraph"){
+      this.demoApp = true
+    }
+    console.log(this.demoApp);    
+
+    // onSubmit(): void {
+    //   const rawForm = this.form.getRawValue();
+    //   this.recruiterAuthService.login(environment.DEMO_USER, environment.DEMO_USER_PASSWORD).subscribe({
+    //     next: () => {
+    //       this.router.navigate(['recruiter'])
+    //     },
+    //     error: (err) => {
+    //       this.errorMessage = err.code;
+    //     },
+    //   });
+    // }
+  }
+
 
   goToRecruiter() {
     // window.open(url, "_blank");
     this.router.navigate(['recruiter']);
+  }
+  goToDemoRecruiter() {
+    // this.router.navigate(['recruiter']);
+    this.recruiterAuthService.login(environment.DEMO_USER, environment.DEMO_USER_PASSWORD).subscribe({
+        next: () => {
+          this.router.navigate(['recruiter'])
+        },
+        error: (err) => {
+          this.errorMessage = err.code;
+        },
+      });    
   }
 
   // goToCandidate() {

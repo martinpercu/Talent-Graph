@@ -6,19 +6,41 @@
 
     <div class="flex flex-col items-center text-center text-xs sm:text-sm text-neutral-700 dark:text-neutral-200">
 
-      <div class="w-16 sm:w-24">
+      @if(demoApp){        
+      <div class="w-28 sm:w-32 pt-4 pb-6">
+        <img src="./../../../assets/image/bridge-talent-beta.png" alt="">
+      </div>
+      }@else {
+      <div class="w-20 sm:w-32">
         <img src="./../../../assets/image/bridge-logo-120.png" alt="">
       </div>
+      }
 
 
+      @if(demoApp) {
+      <div class="mb-5 sm:mb-7 mt-1 sm:mt-4 px-4 text-base sm:text-xl font-medium text-brand">
+        {{ 'main.welcome_to' | transloco }}  {{this.appName}}<br>
+        <div class="mt-1 sm:mt-2 text-sm sm:text-base ">- Hiring made simple, powered by AI -</div>
+      </div>
+      }@else {
       <div class="mb-5 sm:mb-7 mt-1 sm:mt-4 px-4 text-base sm:text-xl font-medium text-brand">
         {{ 'main.welcome_to' | transloco }}  {{this.appName}}<br>
         <div class="mt-1 sm:mt-2">- {{ 'main.copy_1' | transloco }} -</div>
-      </div>
+      </div>        
+      }
+
 
       <!-- <div class="mb-5 sm:mb-7 mt-4 px-4 text-base sm:text-xl font-medium text-brand">
       </div> -->
-
+      
+      
+      @if(demoApp) {
+      <div class="pb-6 w-3/5">
+        <div class="pb-4">
+          You are logged into a live demo environment with synthetic data to test our LangGraph integration
+        </div>
+      </div>
+      }@else {
       <div class="pb-6 w-2/3">
         <div class="pb-4">
           {{ 'main.this_is_beta' | transloco }}
@@ -26,16 +48,25 @@
           <!-- <mat-icon class="pt-1">speaker_notes</mat-icon> -->
         </div>
       </div>
+      }
+
 
 
       <div class="flex flex-row gap-2 sm:gap-8 py-2 sm:pt-2 pt-0 sm:pb-8 pb-4 mx-2">
 
-
+        @if(demoApp) {
+        <div (click)="goToDemoRecruiter()"
+          class="flex items-center p-3 gap-2 text-sm font-semibold bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">
+          <mat-icon class="">rocket_launch</mat-icon>
+          Start Live Demo
+        </div>
+        }@else {
         <div (click)="goToRecruiter()"
           class="flex items-center p-3 gap-2 text-sm font-semibold bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">
           <mat-icon class="">person_raised_hand</mat-icon>
           {{ 'main.enter_account' | transloco }}
         </div>
+        }
 
         <!-- <div (click)="goToNotRecruiter()"
           class="flex items-center p-2 sm:p-3 sm:gap-2 text-sm font-semibold bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">

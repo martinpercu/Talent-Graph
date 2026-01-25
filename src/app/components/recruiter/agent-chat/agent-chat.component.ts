@@ -51,10 +51,10 @@ export class AgentChatComponent implements OnInit {
   speakIsEnabled: boolean = false; // Controla si TTS está activado
   // End Voice
 
-  message_1: string = "email"
-  message_2: string = "question"
-  message_3: string = "compare"
-  message_4: string = "hard"
+  message_1: string = "Email"
+  message_2: string = "Questions"
+  message_3: string = "Compare"
+  message_4: string = "Schedule Interview"
 
   // Para rastrear el thread anterior
   private previousThreadId: string | null = null;
@@ -494,17 +494,17 @@ export class AgentChatComponent implements OnInit {
   speakText(text: string): void {
     console.log("in Speack TEXT ==>" + text);
     
-    if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
+    // if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
 
     // VERY IMPORTANT ===> Clean the tail ==>  LIMPIAR LA COLA DE SPEECH!!!
     window.speechSynthesis.cancel(); // clean the reproduction queu
-    // if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
+    if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US'; // Idioma Inglés (puedes cambiar a 'es-US' u otros)
     utterance.volume = 1; // Volumen (0 a 1)
     utterance.rate = 1; // Velocidad (0.1 a 10)
-    utterance.pitch = 1; // Tono (0 a 2)
+    utterance.pitch = 0.5; // Tono (0 a 2)
 
     // Opcional: Seleccionar una voz específica
     // List of en-US inChrome: 'Samantha', 'Victoria', 'Alex', 'Fred' and 'Google US English'
