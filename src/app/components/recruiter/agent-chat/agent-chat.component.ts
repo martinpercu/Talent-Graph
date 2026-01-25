@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, ElementRef, ChangeDetectorRef, OnInit, effect } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef, ChangeDetectorRef, OnInit, effect, signal } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 
@@ -10,7 +10,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { MessageWaitingComponent } from '@components/message-waiting/message-waiting.component';
 
-import { ChatMessage } from '@models/chatMessage';
+import { ChatMessage, AgentState } from '@models/chatMessage';
 
 import { VisualStatesService } from '@services/visual-states.service';
 import { AgentChatService } from '@services/agent-chat.service';
@@ -45,6 +45,9 @@ export class AgentChatComponent implements OnInit {
 
   showArrowDown: boolean = false;
   userScrolled: boolean = false; // Nueva bandera para controlar el scroll manual
+
+  // Estado actual del agente
+  currentAgentState = signal<AgentState>('chat');
 
 
   // start Voice
@@ -189,6 +192,7 @@ export class AgentChatComponent implements OnInit {
     if (!threadId) {
       console.log('📭 Sin thread seleccionado - limpiando pantalla');
       this.chatMessages = [];
+      this.currentAgentState.set('chat');
       this.previousThreadId = null;
       return;
     }
@@ -228,6 +232,12 @@ export class AgentChatComponent implements OnInit {
 
         // Actualizar con los mensajes del backend
         this.chatMessages = [...history.messages];
+
+        // 🎯 Capturar estado del agente si viene en el history
+        if (history.current_state) {
+          console.log('🎯 Estado del agente desde history:', history.current_state);
+          this.currentAgentState.set(history.current_state);
+        }
 
         // Guardar en caché para la próxima vez
         this.agentChatListService.saveMessagesToCache(threadId, history.messages);
@@ -283,6 +293,46 @@ export class AgentChatComponent implements OnInit {
   }
 
   /**
+   * Crea un nuevo thread y envía el trigger silencioso al backend
+   * Esta función se reutiliza tanto en focus como en clearChatHistory
+   * @returns El threadId del nuevo thread creado, o null si falló
+   */
+  private async createNewThreadWithTrigger(): Promise<string | null> {
+    // Verificar si ya alcanzó el máximo de threads
+    const threads = this.agentChatListService.getThreads();
+    const maxThreads = this.agentChatListService.getMaxThreads();
+
+    if (threads.length >= maxThreads) {
+      console.log('⚠️ Máximo de threads alcanzado - NO crear thread');
+      return null;
+    }
+
+    console.log('🎯 Creando thread automáticamente...');
+
+    // Generar threadId
+    const newThreadId = this.agentChatListService.generateThreadId();
+    console.log('🆔 ThreadId generado:', newThreadId);
+
+    try {
+      // Enviar trigger al backend PRIMERO (nueva arquitectura)
+      await this.agentChatService.sendTriggerMessage(newThreadId);
+      console.log('✅ Trigger enviado exitosamente:', newThreadId);
+
+      // SOLO si el backend responde OK, crear thread en frontend
+      await this.agentChatListService.createEmptyThreadWithId(newThreadId);
+      console.log('✨ Thread creado automáticamente:', newThreadId);
+
+      console.log('✅ Thread listo para recibir mensajes');
+      return newThreadId;
+
+    } catch (error) {
+      console.error('❌ Error al crear thread - backend no disponible:', error);
+      // NO crear thread si el backend falló
+      return null;
+    }
+  }
+
+  /**
    * Se ejecuta cuando el usuario hace focus en el textarea
    * Crea un thread vacío + envía trigger si no hay thread seleccionado
    */
@@ -295,37 +345,7 @@ export class AgentChatComponent implements OnInit {
       return;
     }
 
-    // Verificar si ya alcanzó el máximo de threads
-    const threads = this.agentChatListService.getThreads();
-    const maxThreads = this.agentChatListService.getMaxThreads();
-
-    if (threads.length >= maxThreads) {
-      console.log('⚠️ Máximo de threads alcanzado - NO crear thread en focus');
-      return;
-    }
-
-    console.log('🎯 Focus en textarea sin thread - creando thread automáticamente...');
-
-    // Generar threadId
-    const newThreadId = this.agentChatListService.generateThreadId();
-    console.log('🆔 ThreadId generado en focus:', newThreadId);
-
-    try {
-      // Enviar trigger al backend PRIMERO (nueva arquitectura)
-      await this.agentChatService.sendTriggerMessage(newThreadId);
-      console.log('✅ Trigger enviado exitosamente en focus:', newThreadId);
-
-      // SOLO si el backend responde OK, crear thread en frontend
-      await this.agentChatListService.createEmptyThreadWithId(newThreadId);
-      console.log('✨ Thread creado automáticamente en focus:', newThreadId);
-
-      console.log('✅ Thread listo para recibir mensajes');
-
-    } catch (error) {
-      console.error('❌ Error en focus - backend no disponible:', error);
-      // NO crear thread si el backend falló
-      // El usuario verá el textarea vacío sin thread
-    }
+    await this.createNewThreadWithTrigger();
   }
 
   async sendMessage(message: string, showUserMessage: boolean = true): Promise<void> {
@@ -353,7 +373,7 @@ export class AgentChatComponent implements OnInit {
       console.log('⚠️ Máximo de threads alcanzado. Mostrando alert...');
 
       const confirmed = confirm(
-        'Cantidad máxima de chats alcanzados. ¿Quieres enviar igualmente el mensaje? Se borrará tu conversación más antigua'
+        'Maximum session limit reached. Send anyway? Your oldest conversation will be deleted.'
       );
 
       if (!confirmed) {
@@ -433,6 +453,11 @@ export class AgentChatComponent implements OnInit {
         this.chatMessages = [...this.chatMessages];
         // 💾 Guardar en caché incluso si hay error
         this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
+      },
+      (state) => {
+        // 🎯 Callback cuando cambia el estado del agente
+        console.log('🔄 Actualizando estado del agente a:', state);
+        this.currentAgentState.set(state as AgentState);
       }
     );
 
@@ -468,6 +493,9 @@ export class AgentChatComponent implements OnInit {
     // Limpiar mensajes en el frontend inmediatamente
     this.chatMessages = [];
 
+    // Resetear estado del agente a 'chat'
+    this.currentAgentState.set('chat');
+
     // Eliminar el thread de la lista (también limpia caché y deselecciona)
     await this.agentChatListService.deleteThread(threadId);
 
@@ -488,6 +516,11 @@ export class AgentChatComponent implements OnInit {
         // El thread ya fue eliminado del frontend y Firestore
       }
     });
+
+    // 🎯 Crear nuevo thread inmediatamente y enviar trigger silencioso
+    // Esto permite que el backend precargue datos mientras el usuario escribe
+    console.log('🚀 Creando nuevo thread con trigger para precargar backend...');
+    await this.createNewThreadWithTrigger();
   }
 
   // Nueva función para reproducir texto como voz
