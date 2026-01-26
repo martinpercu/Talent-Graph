@@ -19,6 +19,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 
 import { AgentChatsListComponent } from '@recruiter/agent-chats-list/agent-chats-list.component';
 
+import { environment } from '@env/environment';
+
 
 @Component({
   selector: 'app-agent-chat',
@@ -58,6 +60,12 @@ export class AgentChatComponent implements OnInit {
   message_2: string = "Questions"
   message_3: string = "Compare"
   message_4: string = "Schedule Interview"
+
+
+  platformName: string = environment.WEBSITE_NAME;
+  isExpanded = false; // Por defecto cerrado para no ocupar espacio, o true si querés que lo lean sí o sí.
+  demoMainEmail: string = "talentgraph.demo@gmail.com"
+  demoDollyEmail: string = "martinpercu@gmail.com"
 
   // Para rastrear el thread anterior
   private previousThreadId: string | null = null;
