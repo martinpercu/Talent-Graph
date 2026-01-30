@@ -56,6 +56,12 @@ export class AgentChatComponent implements OnInit {
   speakIsEnabled: boolean = false; // Controla si TTS está activado
   // End Voice
 
+  // STT - Speech to Text (grabación de audio)
+  isRecording = signal(false);
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: Blob[] = [];
+  // End STT
+
   message_1: string = "Email"
   message_2: string = "Questions"
   message_3: string = "Compare"
@@ -571,5 +577,176 @@ export class AgentChatComponent implements OnInit {
   //   const test = this.agentChatService.tester()
   //   console.log(test);
   // }
+
+  // ==================== STT Methods ====================
+
+  /**
+   * Toggle de grabación - inicia o detiene según el estado actual
+   */
+  toggleRecording(): void {
+    if (this.isRecording()) {
+      this.stopRecording();
+    } else {
+      this.startRecording();
+    }
+  }
+
+  /**
+   * Inicia la grabación de audio usando MediaRecorder
+   */
+  async startRecording(): Promise<void> {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      this.mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+
+      this.audioChunks = [];
+
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        console.log('🎤 Audio grabado:', audioBlob.size, 'bytes');
+
+        // Detener todos los tracks del stream
+        stream.getTracks().forEach(track => track.stop());
+
+        // Enviar el audio
+        this.sendAudioMessage(audioBlob);
+      };
+
+      this.mediaRecorder.start();
+      this.isRecording.set(true);
+      console.log('🔴 Grabación iniciada');
+
+    } catch (error) {
+      console.error('❌ Error al acceder al micrófono:', error);
+      alert('No se pudo acceder al micrófono. Por favor, verifica los permisos.');
+    }
+  }
+
+  /**
+   * Detiene la grabación de audio
+   */
+  stopRecording(): void {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+      this.isRecording.set(false);
+      console.log('⏹️ Grabación detenida');
+    }
+  }
+
+  /**
+   * Envía el audio al backend y procesa la respuesta streaming
+   */
+  async sendAudioMessage(audioBlob: Blob): Promise<void> {
+    // Obtener el threadId actual del servicio
+    let threadId = this.agentChatListService.getCurrentThreadId();
+
+    // Si no hay thread, crear uno
+    if (!threadId) {
+      console.warn('⚠️ No hay thread para audio - creando uno nuevo');
+      threadId = await this.agentChatListService.createEmptyThread();
+      await this.agentChatService.sendTriggerMessage(threadId);
+    }
+
+    // Verificar límite de threads (similar a sendMessage)
+    const threads = this.agentChatListService.getThreads();
+    const maxThreads = this.agentChatListService.getMaxThreads();
+
+    if (threads.length > maxThreads) {
+      const confirmed = confirm(
+        'Maximum session limit reached. Send anyway? Your oldest conversation will be deleted.'
+      );
+
+      if (!confirmed) {
+        await this.agentChatListService.deleteThread(threadId);
+        this.agentChatService.clearChatHistory(threadId).subscribe();
+        return;
+      }
+
+      const deletedThread = await this.agentChatListService.deleteOldestThread();
+      if (deletedThread) {
+        this.agentChatService.clearChatHistory(deletedThread.threadId).subscribe();
+      }
+    }
+
+    // Mover el thread al principio
+    await this.agentChatListService.moveThreadToTop(threadId);
+
+    this.loadingResponse = true;
+
+    // Crear placeholder para el mensaje del usuario (se llenará con la transcripción)
+    const userMessageIndex = this.chatMessages.length;
+    this.chatMessages.push({ role: "user", message: "🎤 ..." });
+
+    // Crear el mensaje del asistente vacío
+    const responseMessage = { role: "assistant", message: "" };
+    this.chatMessages.push(responseMessage);
+    const responseIndex = this.chatMessages.length - 1;
+
+    console.log('📤 Enviando audio...');
+    console.log('🔵 ThreadId usado:', threadId);
+
+    // Usar el servicio para el streaming de audio
+    this.agentChatService.streamAudioResponse(
+      audioBlob,
+      threadId,
+      responseIndex,
+      this.chatMessages,
+      // onTranscription - cuando llega el texto transcrito
+      (transcribedText) => {
+        console.log('📝 Texto transcrito:', transcribedText);
+        this.chatMessages[userMessageIndex].message = transcribedText;
+
+        // Renombrar thread si es necesario
+        const currentThread = threads.find(t => t.threadId === threadId);
+        if (currentThread && currentThread.name === '. . .') {
+          this.agentChatListService.renameThread(threadId, transcribedText.substring(0, 50));
+        }
+
+        this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
+        this.cdr.detectChanges(); // Forzar detección de cambios
+      },
+      // onContentReceived
+      (_content) => {
+        this.cdr.detectChanges(); // Forzar detección de cambios
+        this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
+      },
+      // onLoadingChange
+      (loading) => {
+        this.loadingResponse = loading;
+        if (!loading) {
+          this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
+        }
+        this.cdr.detectChanges();
+      },
+      // onScroll
+      () => this.scrollToBottom(),
+      // onSpeakText
+      (text) => this.speakText(text),
+      // onError
+      (_errorMessage) => {
+        this.cdr.detectChanges();
+        this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
+      },
+      // onStateChange
+      (state) => {
+        console.log('🔄 Actualizando estado del agente a:', state);
+        this.currentAgentState.set(state as AgentState);
+        this.cdr.detectChanges();
+      }
+    );
+
+    setTimeout(() => {
+      this.scrollToBottomFromArrow();
+    }, 100);
+  }
 
 }

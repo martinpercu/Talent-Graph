@@ -149,8 +149,23 @@
               </textarea>
             </div>
 
+            <!-- Botón de micrófono STT -->
+            <div role="button" aria-label="Grabar audio" tabindex="0"
+              class="flex w-max h-9 p-1.5 rounded-full cursor-pointer transition-all duration-200"
+              [ngClass]="{
+                'bg-red-500 dark:bg-red-500 animate-pulse': isRecording(),
+                'bg-neutral-200 dark:bg-neutral-600 hover:bg-neutral-300 dark:hover:bg-neutral-500': !isRecording()
+              }"
+              (click)="toggleRecording()">
+              <mat-icon [ngClass]="{
+                'text-white': isRecording(),
+                'text-neutral-600 dark:text-neutral-200': !isRecording()
+              }">{{ isRecording() ? 'stop' : 'mic' }}</mat-icon>
+            </div>
+
+            <!-- Botón de enviar mensaje -->
             <div role="button" aria-label="Enviar mensaje" tabindex="0"
-              class="flex w-max  h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
+              class="flex w-max h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
               (click)="sendMessage(userMessage)">
               <mat-icon class="text-white dark:text-neutral-800">arrow_upward</mat-icon>
             </div>

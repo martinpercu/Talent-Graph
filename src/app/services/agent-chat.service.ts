@@ -287,6 +287,150 @@ export class AgentChatService {
   }
 
   /**
+   * Envía un audio y recibe la respuesta en modo streaming SSE
+   * El backend primero envía la transcripción, luego la respuesta del agente
+   * @param audioBlob - Blob del audio grabado
+   * @param threadId - ID del thread (conversación)
+   * @param responseIndex - Índice del mensaje de respuesta en el array
+   * @param chatMessages - Referencia al array de mensajes
+   * @param onTranscription - Callback cuando llega la transcripción del audio
+   * @param onContentReceived - Callback cuando llega contenido del agente
+   * @param onLoadingChange - Callback para cambiar el estado de loading
+   * @param onScroll - Callback para hacer scroll
+   * @param onSpeakText - Callback para reproducir texto
+   * @param onError - Callback para manejar errores
+   * @param onStateChange - Callback para notificar cambio de estado del agente
+   * @param language - Idioma opcional para la transcripción ("es", "en", "fr")
+   */
+  streamAudioResponse(
+    audioBlob: Blob,
+    threadId: string,
+    responseIndex: number,
+    chatMessages: ChatMessage[],
+    onTranscription: (text: string) => void,
+    onContentReceived: (content: string) => void,
+    onLoadingChange: (loading: boolean) => void,
+    onScroll: () => void,
+    onSpeakText: (text: string) => void,
+    onError: (errorMessage: string) => void,
+    onStateChange?: (state: string) => void,
+    language?: string
+  ): void {
+    console.log('🎤 Enviando audio al thread:', threadId);
+
+    const url = `${environment.BACK_AGENT_BRIDGE}/audio/chat/${threadId}`;
+
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.webm');
+    formData.append('recruiterId', this.authService.getCurrentUserId() || '');
+    formData.append('max_threads', this.agentChatListService.getMaxThreads().toString());
+    if (language) {
+      formData.append('language', language);
+    }
+
+    fetch(url, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let firstContentReceived = false;
+
+      const readStream = () => {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            console.log('✅ Audio stream completado');
+            const the_message_finished = chatMessages[responseIndex].message;
+
+            if (typeof the_message_finished === 'string' && the_message_finished.trim() !== '') {
+              onSpeakText(the_message_finished);
+            }
+            return;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.substring(6));
+
+                if (data.type === 'transcription') {
+                  // Transcripción del audio del usuario
+                  console.log('📝 Transcripción recibida:', data.text);
+                  onTranscription(data.text);
+                  onScroll();
+                } else if (data.type === 'agent' || data.type === 'content') {
+                  // Respuesta del agente
+                  if (!firstContentReceived) {
+                    onLoadingChange(false);
+                    firstContentReceived = true;
+                    console.log('🚀 Primer contenido del agente recibido');
+                  }
+
+                  const content = data.content || data.text || '';
+                  const currentMessage = chatMessages[responseIndex].message || '';
+
+                  if (content === currentMessage) {
+                    console.log('⚠️ Chunk duplicado detectado - IGNORADO');
+                    continue;
+                  }
+
+                  chatMessages[responseIndex].message += content;
+
+                  if (data.state && onStateChange) {
+                    console.log('🎯 Estado del agente recibido:', data.state);
+                    onStateChange(data.state);
+                  }
+
+                  onContentReceived(content);
+                  onScroll();
+                } else if (data.type === 'state_change') {
+                  console.log('🔄 Cambio de estado detectado:', data.new_state);
+                  if (onStateChange) {
+                    onStateChange(data.new_state);
+                  }
+                } else if (data.type === 'done') {
+                  console.log('✅ Stream done signal recibido');
+                } else if (data.type === 'error') {
+                  console.error('❌ Error del servidor:', data.message);
+                  chatMessages[responseIndex].message = "Error getting response. Please try again.";
+                  onError("Error getting response. Please try again.");
+                  onLoadingChange(false);
+                }
+              } catch (e) {
+                console.error('Error parsing JSON:', e, line);
+              }
+            }
+          }
+
+          readStream();
+        }).catch(error => {
+          console.error('❌ Error en audio stream:', error);
+          chatMessages[responseIndex].message = "Error getting response. Please try again.";
+          onError("Error getting response. Please try again.");
+          onLoadingChange(false);
+        });
+      };
+
+      readStream();
+    })
+    .catch(error => {
+      console.error('❌ Error en fetch de audio:', error);
+      chatMessages[responseIndex].message = "❌ Error al enviar el audio. Por favor, intenta de nuevo.";
+      onError("Error sending audio");
+      onLoadingChange(false);
+    });
+  }
+
+  /**
    * Envía el mensaje trigger "start-loading-state" al backend
    * para que cargue el state inicial del agente con datos de la DB
    * @param threadId - ID del thread que se está iniciando
