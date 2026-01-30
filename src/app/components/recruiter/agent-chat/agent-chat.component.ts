@@ -207,6 +207,10 @@ export class AgentChatComponent implements OnInit {
 
     console.log('🔄 Cambiando a thread:', threadId);
 
+    // Resetear estado visual del agente al cambiar de thread
+    // Si el backend tiene un estado guardado, lo sobreescribirá después
+    this.currentAgentState.set('chat');
+
     // Guardar los mensajes actuales en el caché del thread anterior (si existe)
     if (this.previousThreadId && this.previousThreadId !== threadId && this.chatMessages.length > 0) {
       console.log(`💾 Guardando ${this.chatMessages.length} mensajes del thread anterior: ${this.previousThreadId}`);
