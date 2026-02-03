@@ -23,6 +23,12 @@ export class AgentChatService {
   }
 
 
+  // Cola de audios para reproducción secuencial (ordenada por sequence)
+  private audioQueue: { sequence: number; url: string }[] = [];
+  private isPlayingAudio = false;
+  private expectedSequence = 1; // Próxima secuencia esperada
+  private streamEnded = false; // Indica si el stream terminó
+
   /**
    * Envía un mensaje y recibe la respuesta en modo streaming
    * @param message - Mensaje a enviar
@@ -31,8 +37,9 @@ export class AgentChatService {
    * @param chatMessages - Referencia al array de mensajes
    * @param onLoadingChange - Callback para cambiar el estado de loading
    * @param onScroll - Callback para hacer scroll
-   * @param onSpeakText - Callback para reproducir texto
+   * @param onSpeakText - Callback para reproducir texto (fallback browser TTS)
    * @param onStateChange - Callback para notificar cambio de estado del agente
+   * @param voice - Voz del backend TTS (af_heart, em_alex, ef_dora, ff_siwis)
    */
   streamResponse(
     message: string,
@@ -44,12 +51,28 @@ export class AgentChatService {
     onScroll: () => void,
     onSpeakText: (text: string) => void,
     onError: (errorMessage: string) => void,
-    onStateChange?: (state: string) => void
+    onStateChange?: (state: string) => void,
+    voice?: string
   ): void {
     console.log('🔵 Usando threadId:', threadId);
 
-    const url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
+    // ⏱️ Timestamp para medir timing de eventos
+    const streamStartTime = Date.now();
+    const getElapsed = () => `[${Date.now() - streamStartTime}ms]`;
 
+    // Limpiar cola de audios anterior y resetear estado
+    this.audioQueue = [];
+    this.isPlayingAudio = false;
+    this.expectedSequence = 1;
+    this.streamEnded = false;
+
+    // Construir URL con voice si está definido
+    let url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
+    if (voice) {
+      url += `?voice=${voice}`;
+      console.log('🔊 TTS habilitado con voz:', voice);
+    }
+    console.log(`⏱️ ${getElapsed()} Stream iniciando...`);
 
     fetch(url, {
       method: 'POST',
@@ -73,8 +96,7 @@ export class AgentChatService {
       const readStream = () => {
         reader.read().then(({ done, value }) => {
           if (done) {
-            console.log('✅ Stream completado');
-            console.log("🎯 ACA YA TENGO TODO EL MENSAJE TERMINADO");
+            console.log(`⏱️ ${getElapsed()} ✅ Stream completado`);
             console.log("📝 Mensaje completo:", chatMessages[responseIndex].message);
             const the_message_finished = chatMessages[responseIndex].message;
 
@@ -99,7 +121,10 @@ export class AgentChatService {
               try {
                 const data = JSON.parse(line.substring(6));
 
-                if (data.type === 'content') {
+                if (data.type === 'start') {
+                  // Evento de inicio - indica si voice está habilitado
+                  console.log(`⏱️ ${getElapsed()} 🎬 Stream iniciado. Voice enabled:`, data.voice_enabled);
+                } else if (data.type === 'content') {
                   // Detener el loading cuando llega el primer contenido
                   if (!firstContentReceived) {
                     onLoadingChange(false);
@@ -108,7 +133,7 @@ export class AgentChatService {
                   }
 
                   // 🔍 DEBUG: Ver qué contenido llega del backend
-                  console.log('📦 Chunk recibido:', data.content);
+                  console.log(`⏱️ ${getElapsed()} 📦 CONTENT:`, data.content);
 
                   // ⚠️ IMPORTANTE: El backend envía el mensaje completo al final
                   // Si el chunk es igual al mensaje actual, NO agregarlo (evitar duplicado)
@@ -129,6 +154,15 @@ export class AgentChatService {
 
                   onContentReceived(data.content);
                   onScroll();
+                } else if (data.type === 'audio') {
+                  // 🔊 Audio del TTS del backend
+                  console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}:`, data.url);
+                  const audioUrl = `${environment.BACK_AGENT_BRIDGE}${data.url}`;
+                  this.enqueueAudio(data.sequence, audioUrl);
+                } else if (data.type === 'end') {
+                  // Fin del stream - marcar y comenzar reproducción ordenada
+                  console.log(`⏱️ ${getElapsed()} 🏁 END - Total audios:`, data.audio_count);
+                  this.onStreamEnd();
                 } else if (data.type === 'state_change') {
                   // 🔄 Evento de cambio de estado
                   console.log('🔄 Cambio de estado detectado:', data.new_state);
@@ -470,6 +504,104 @@ export class AgentChatService {
       console.error('❌ Error al enviar mensaje trigger:', error);
       // No lanzar error - es mejor que el sistema continúe aunque falle el trigger
     }
+  }
+
+  // ==================== Audio Queue Methods ====================
+
+  /**
+   * Agrega un audio a la cola con su número de secuencia
+   * Comienza a reproducir inmediatamente si es la secuencia esperada
+   * @param sequence - Número de secuencia del audio
+   * @param audioUrl - URL completa del audio a reproducir
+   */
+  private enqueueAudio(sequence: number, audioUrl: string): void {
+    console.log(`📥 Encolando audio #${sequence}:`, audioUrl);
+    this.audioQueue.push({ sequence, url: audioUrl });
+
+    // Si es la secuencia esperada y no estamos reproduciendo, empezar!
+    if (sequence === this.expectedSequence && !this.isPlayingAudio) {
+      console.log(`🎯 Audio #${sequence} es la secuencia esperada - iniciando reproducción`);
+      this.tryPlayNext();
+    }
+  }
+
+  /**
+   * Se llama cuando el stream termina
+   * Si hay audios pendientes que no se reprodujeron, intentar reproducir
+   */
+  private onStreamEnd(): void {
+    this.streamEnded = true;
+    console.log('🏁 Stream terminado - verificando cola de audio');
+
+    // Si no estamos reproduciendo pero hay audios, intentar reproducir
+    if (!this.isPlayingAudio && this.audioQueue.length > 0) {
+      this.tryPlayNext();
+    }
+  }
+
+  /**
+   * Intenta reproducir el siguiente audio esperado si está disponible
+   */
+  private tryPlayNext(): void {
+    // Buscar el audio con la secuencia esperada
+    const audioIndex = this.audioQueue.findIndex(a => a.sequence === this.expectedSequence);
+
+    if (audioIndex !== -1) {
+      // Encontramos el audio esperado - reproducirlo
+      const audioItem = this.audioQueue.splice(audioIndex, 1)[0];
+      this.playAudio(audioItem);
+    } else if (this.streamEnded && this.audioQueue.length > 0) {
+      // Stream terminó pero no encontramos la secuencia esperada
+      // Ordenar y reproducir lo que queda (por si se perdió alguno)
+      this.audioQueue.sort((a, b) => a.sequence - b.sequence);
+      console.log(`⚠️ Secuencia #${this.expectedSequence} no encontrada, reproduciendo #${this.audioQueue[0].sequence}`);
+      const audioItem = this.audioQueue.shift()!;
+      this.expectedSequence = audioItem.sequence;
+      this.playAudio(audioItem);
+    } else {
+      // Audio esperado aún no llegó - esperar
+      console.log(`⏳ Esperando audio #${this.expectedSequence}...`);
+      this.isPlayingAudio = false;
+    }
+  }
+
+  /**
+   * Reproduce un audio específico
+   */
+  private playAudio(audioItem: { sequence: number; url: string }): void {
+    this.isPlayingAudio = true;
+    console.log(`▶️ Reproduciendo audio #${audioItem.sequence}:`, audioItem.url);
+
+    const audio = new Audio(audioItem.url);
+
+    audio.onended = () => {
+      console.log(`✅ Audio #${audioItem.sequence} terminado`);
+      this.expectedSequence = audioItem.sequence + 1;
+      this.tryPlayNext();
+    };
+
+    audio.onerror = (error) => {
+      console.error(`❌ Error reproduciendo audio #${audioItem.sequence}:`, error);
+      this.expectedSequence = audioItem.sequence + 1;
+      this.tryPlayNext();
+    };
+
+    audio.play().catch(error => {
+      console.error(`❌ Error al iniciar audio #${audioItem.sequence}:`, error);
+      this.expectedSequence = audioItem.sequence + 1;
+      this.tryPlayNext();
+    });
+  }
+
+  /**
+   * Detiene la reproducción y limpia la cola de audio
+   */
+  stopAudioPlayback(): void {
+    this.audioQueue = [];
+    this.isPlayingAudio = false;
+    this.expectedSequence = 1;
+    this.streamEnded = false;
+    console.log('⏹️ Reproducción de audio detenida');
   }
 
 }

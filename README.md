@@ -10,44 +10,53 @@ This repository demonstrates a complete AI-driven recruitment platform with thre
 2. **Candidate Management**: Resume parsing, scoring system, and multi-job application tracking with automated screening
 3. **Recruiter Dashboard**: Comprehensive job posting management, candidate pipeline, and AI-powered interview assistant
 
-## 🧠 Backend Agent Architecture (v3.0 - January 2026)
+## 🧠 Backend Agent Architecture (v3.6 - February 2026)
 
 The recruitment intelligence is powered by a **production-ready LangGraph agent** with advanced features:
 
-- **StateGraph orchestration** with **28 specialized nodes** organized in 5 categories:
+- **StateGraph orchestration** with **34 specialized nodes** organized in 9 categories:
   - Entry & Logging (2 nodes: state_logger_start, state_logger_end)
-  - Action Trigger System (6 nodes: trigger_checker, selection_resolver, question/email/comparison generators, direct_response)
-  - Multi-Level Detection ✨ NEW (7 nodes: silent_load_detector, pending_action_resolver, job_mention_checker, candidate_detector, job_list_checker, candidate_filter, talk_with_state)
-  - Context Management (4 nodes: silent_loader_checker, context_resolver, context_loader, context_enricher)
-  - Intent & Domain Routing (9 nodes: domain_checker, intent_checker, job/resume handlers, resume_matcher, general_talk, llm_node, etc.)
-- **14 conditional routes** for intelligent flow control:
-  - post_trigger_route, trigger_route, action_generator_route
-  - silent_load_detector_route ✨ NEW
-  - job_mention_route ✨ NEW, candidate_detector_route ✨ NEW, job_list_route ✨ NEW
-  - silent_loader_route, context_resolver_route
+  - Fast Detection Layer (8 nodes: trigger_checker, silent_load_detector, pending_action_resolver, job_mention_checker, candidate_filter, candidate_detector, job_list_checker, candidates_full_list_checker)
+  - Action Trigger System (8 nodes: selection_resolver, candidate_selector, question/email/comparison generators, direct_response, silent_loader_checker, post_trigger)
+  - Context Management (4 nodes: context_resolver, talk_with_state, context_loader, context_enricher)
+  - Intent & Domain Routing (5 nodes: domain_checker, intent_checker, job_handler, resume_handler, resume_matcher)
+  - LLM Invocation (2 nodes: general_talk, llm_node)
+  - MCP & Email Integration ✨ NEW (3 nodes: pending_data_extractor, mcp_action_executor, email_send_executor)
+  - Error Handling ✨ NEW (1 node: unexpected_handler)
+  - Text-to-Speech ✨ NEW (1 node: tts_direct_response)
+- **15 conditional routes** for intelligent flow control:
+  - trigger_checker_route ✨ NEW, post_trigger_route, candidate_selector_route ✨ NEW, action_generator_route
+  - silent_load_detector_route, job_mention_route, candidate_detector_route, job_list_route
+  - silent_loader_route, context_resolver_route, talk_with_state_route ✨ NEW
   - domain_route, context_loader_route, intent_route
 - **Multi-model strategy**: GPT-4o-mini for conversations + Claude Haiku for fast classification (~50-100ms)
-- **Performance optimizations v3.0**:
-  - ⚡ Multi-level detection (7 layers of detection nodes, < 5ms each)
+- **Performance optimizations v3.6**:
+  - ⚡ Multi-level detection (8 layers of detection nodes, < 5ms each)
   - 🚀 **Fast Path v3.0** - context_resolver → talk_with_state (< 10ms, skips domain_checker + context_loader)
+  - 📋 **Fast Path v3.5** - Job description, Job+Candidates, Full candidate list (NO LLM!)
   - 🎯 Action triggers (< 5ms detection - frontend explicit 0ms, heuristic ~1ms)
   - 🔇 Silent loading (~500ms one-time pre-load, then 0ms cached)
   - ⚡ Fast path general (~1ms + LLM, no DB queries)
   - 🔍 Fuzzy matching (30% threshold for jobs/candidates)
   - 💥 Conflict handling (candidate_detector + pending_action_resolver)
+  - 📅 MCP integration (Calendar scheduling + Gmail email sending) ✨ NEW
+  - 🔊 Text-to-Speech with synchronized streaming ✨ NEW
+  - 🎤 Speech-to-Text via Groq Whisper ✨ NEW
   - 📦 Context enricher in ALL paths before LLM (~0-6ms)
   - 💾 Smart cache invalidation (domain=hr_related forces reload)
+  - 🖥️ UI state communication for frontend adaptation ✨ NEW
 - **PostgreSQL checkpointing** for conversation state persistence
 - **SSE streaming** for real-time token-by-token responses
 
 👉 **[Complete Backend Documentation →](docs/AGENT_ARCHITECTURE.md)** - Detailed technical guide covering:
-- **5 Key Agent Flows**: Action Trigger, Silent Loading, Fast Path v3.0 (Early Detection), Fast Path General, Complete HR Path
-- **28 node implementations** with detailed logic (7 new detection nodes in v3.0)
-- **14 conditional routes** with decision logic tables
-- **Multi-level detection system**: triggers → silent load → pending action → job mention → candidate → job list → context resolver
+- **11 Key Agent Flows**: Action Trigger, MCP Calendar/Gmail, Email Send, Silent Loading, Fast Path v3.0, Fast Path v3.5 (NO LLM), TTS Sync, and more
+- **34 node implementations** with detailed logic (organized in 9 categories)
+- **15 conditional routes** with decision logic tables
+- **Multi-level detection system**: triggers → MCP → silent load → pending action → job mention → candidate → job list → candidates list
+- **Voice Features**: Speech-to-Text (Groq Whisper) + Text-to-Speech (Kokoro ONNX)
 - Production safeguards (duplicate detection, conflict handling, fuzzy matching 30%, context isolation, error recovery)
-- Performance metrics (< 5ms triggers, < 10ms fast path v3.0, ~500ms context load, ~1ms fast path general, ~962ms TTFT)
-- API endpoints and deployment guide
+- Performance metrics (< 5ms triggers, < 10ms fast path v3.0, < 10ms fast path v3.5 NO LLM, ~962ms TTFT)
+- API endpoints (including audio endpoints) and deployment guide
 
 ## 🧑‍💼 User Roles
 
@@ -63,10 +72,13 @@ The recruitment intelligence is powered by a **production-ready LangGraph agent*
 - **Streaming Responses**: Real-time SSE (Server-Sent Events) for ChatGPT-like experience
 - **Context-Aware Intelligence**: Agent has access to jobs, candidates, and resumes for informed responses
 - **Action Triggers**: Fast path for specific actions (generate questions, draft emails, compare candidates)
+- **MCP Integration** ✨ NEW: Calendar scheduling + Gmail email sending with multi-turn data collection
 - **Smart Performance**: Silent loading, context caching, and intelligent routing (< 5ms trigger detection)
 - **Subscription-based Limits**: Thread limits based on recruiter subscription level (1-20 threads)
 - **Multi-language Support**: Automatic detection and response in Spanish, English, or French
-- **Text-to-Speech**: Optional audio playback of AI responses for hands-free interaction
+- **Speech-to-Text (STT)** ✨ NEW: Record audio and send to backend via Groq Whisper transcription
+- **Text-to-Speech (TTS)** ✨ NEW: Synchronized audio playback with Kokoro ONNX (multiple voices: af_heart, em_alex, ef_dora, ff_siwis)
+- **UI State Communication** ✨ NEW: Backend sends current_state for frontend UI adaptation (booking, email, question, compare, chat)
 - **Session Persistence**: Thread history maintained across sessions with PostgreSQL checkpointing
 
 ### Candidate Screening
@@ -421,6 +433,8 @@ except Exception as e:
 - **LLM Integration**: LangChain 1.0.2+
   - **GPT-4o-mini** (OpenAI): Intent detection, conversation, analysis, question generation
   - **Claude Haiku** (Anthropic): Fast domain classification (~50-100ms)
+- **Speech-to-Text**: Groq Whisper (whisper-large-v3-turbo) ✨ NEW
+- **Text-to-Speech**: Kokoro ONNX (local, thread-safe, multiple voices) ✨ NEW
 - **API Framework**: FastAPI (async, streaming SSE)
 - **Database**: PostgreSQL 15 (jobs, candidates, resumes, thread states)
 - **ORM**: SQLAlchemy 2.0 + Alembic
@@ -783,13 +797,23 @@ Content-Type: application/json
 
 **Response (SSE)**:
 ```
-data: {"type": "content", "content": "Let me check your "}
-data: {"type": "content", "content": "active Software Engineer "}
-data: {"type": "content", "content": "positions...\n\n"}
-data: {"type": "tool_call", "tool": "get_recruiter_jobs"}
-data: {"type": "content", "content": "I found 3 candidates:\n\n"}
-data: {"type": "content", "content": "1. **John Doe** - 5 years Python\n"}
+data: {"type": "start", "voice_enabled": true}
+data: {"type": "content", "content": "Let me check your ", "state": "chat"}
+data: {"type": "content", "content": "active Software Engineer ", "state": "chat"}
+data: {"type": "content", "content": "positions...\n\n", "state": "chat"}
+data: {"type": "content", "content": "I found 3 candidates:\n\n", "state": "chat"}
+data: {"type": "content", "content": "1. **John Doe** - 5 years Python\n", "state": "chat"}
+data: {"type": "audio", "sequence": 1, "url": "/audio/temp/abc123.wav"}
+data: {"type": "audio", "sequence": 2, "url": "/audio/temp/def456.wav"}
+data: {"type": "end", "audio_count": 2}
 ```
+
+**With TTS (voice output):**
+```
+POST /chat_agent/{threadId}/stream?voice=af_heart
+```
+
+**Voices available:** `af_heart`, `af_bella`, `af_sarah`, `em_alex`, `ef_dora`, `ff_siwis`
 
 ### Thread Management
 ```http
@@ -801,6 +825,28 @@ GET /threads/{threadId}
 
 # List recruiter's threads
 GET /threads/recruiter/{recruiterId}
+```
+
+### Audio Endpoints (STT + TTS) ✨ NEW v3.6
+```http
+# Speech-to-Text: Transcribe audio to text
+POST /audio/transcribe
+Content-Type: multipart/form-data
+Body: file (audio), language (optional)
+Response: { "text": "transcribed text" }
+
+# Speech-to-Text + Chat: Transcribe and chat in one request
+POST /audio/chat/{chat_id}
+Content-Type: multipart/form-data
+Body: file (audio), recruiterId, language (optional)
+
+Response (SSE):
+data: {"type": "transcription", "text": "Show me candidates"}
+data: {"type": "agent", "content": "I found..."}
+data: {"type": "done"}
+
+# Serve generated TTS audio files
+GET /audio/temp/{filename}
 ```
 
 ## 🎯 Subscription Tiers
@@ -901,7 +947,7 @@ async streamResponse(message: string, threadId: string) {
 }
 ```
 
-## 🎯 Production Features
+## 🎯 Production Features (v3.6)
 
 - ✅ **Real-time AI Chat**: LangGraph-powered agent with streaming
 - ✅ **Multi-threading**: Parallel conversation contexts
@@ -909,31 +955,42 @@ async streamResponse(message: string, threadId: string) {
 - ✅ **Subscription Control**: Feature gating based on tier
 - ✅ **Resume Parsing**: Automated data extraction
 - ✅ **Job Posting**: Full CRUD with advanced options
-- ✅ **Text-to-Speech**: Accessibility and audio learning
+- ✅ **Speech-to-Text** ✨ NEW: Audio input via Groq Whisper transcription
+- ✅ **Text-to-Speech** ✨ NEW: Synchronized audio output via Kokoro ONNX (multiple voices)
+- ✅ **MCP Integration** ✨ NEW: Calendar scheduling + Gmail email sending
+- ✅ **UI State Communication** ✨ NEW: Backend sends state for frontend adaptation
 - ✅ **Google OAuth**: Secure, frictionless authentication
 - ✅ **Multi-language**: English, Spanish, French
 - ✅ **Action Triggers**: Fast path for questions, emails, comparisons
+- ✅ **Fast Path v3.5** ✨ NEW: NO LLM for job description, job+candidates, candidates list
 - ✅ **Smart Caching**: Context invalidation for fresh data
 - ✅ **Duplicate Detection**: Intelligent candidate disambiguation
+- ✅ **Error Recovery** ✨ NEW: unexpected_handler with retry and soft reset
 - ✅ **Vector Embeddings**: OpenAI embeddings for semantic resume search
 
 ---
 
-## ⚡ Performance Metrics (v3.0)
+## ⚡ Performance Metrics (v3.6)
 
 Real-world latency measurements from production:
 
 | Operation | Latency | Notes |
 |-----------|---------|-------|
 | **Action Trigger Detection** | < 5ms | Frontend explicit: 0ms, Heuristic: ~1ms |
-| **Silent Load Detection** ✨ | < 1ms | Detects "start-loading-state" |
-| **Pending Action Resolver** ✨ | ~1-5ms | Resolves conflicts from previous turn |
-| **Job Mention Checker** ✨ | ~1-5ms | Fuzzy matching for job detection |
-| **Candidate Detector** ✨ | ~1-3ms | Fuzzy matching + conflict detection |
-| **Job List Checker** ✨ | < 1ms | Detects list request keywords |
-| **Candidate Filter** ✨ | ~1-3ms | Filters candidates by job + keywords |
-| **Talk With State** ✨ | < 5ms | Fast path prompt preparation (v3.0) |
-| **Fast Path v3.0** ✨ | **< 10ms + LLM** | context_resolver → talk_with_state (skips domain + context_loader) |
+| **MCP Action Detection** ✨ | < 5ms | Schedule interview keywords (ES/EN/FR) |
+| **Silent Load Detection** | < 1ms | Detects "start-loading-state" |
+| **Pending Action Resolver** | ~1-5ms | Resolves conflicts from previous turn |
+| **Job Mention Checker** | ~1-5ms | Fuzzy matching for job detection |
+| **Candidate Detector** | ~1-3ms | Fuzzy matching + conflict detection |
+| **Job List Checker** | < 1ms | Detects list request keywords |
+| **Candidates Full List Checker** ✨ | < 1ms | Detects all candidates request |
+| **Candidate Filter** | ~1-3ms | Filters candidates by job + keywords |
+| **Candidate Selector** ✨ | ~1-5ms | Centralized candidate validation |
+| **Talk With State** | < 5ms | Fast path prompt preparation (v3.0) |
+| **Fast Path v3.0** | **< 10ms + LLM** | context_resolver → talk_with_state (skips domain + context_loader) |
+| **Fast Path (candidates list)** ✨ | **< 10ms, NO LLM** | Full list or summary |
+| **Fast Path (job + candidates)** ✨ | **< 10ms, NO LLM** | Candidate table for job |
+| **Fast Path (job description)** ✨ | **< 10ms, NO LLM** | Job info + candidate count |
 | **Silent Loading** | ~500ms → 0ms | One-time pre-load, then cached |
 | **Context Resolver** | ~3-50ms | Fuzzy matching for candidate context |
 | **Context Enricher** | ~0-6ms | Enrichment in all paths |
@@ -941,6 +998,7 @@ Real-world latency measurements from production:
 | **HR Path (First Load)** | ~500ms + LLM | Context loader with JOINs + analysis |
 | **HR Path (Cached)** | 0ms + LLM | Cache hit - no DB queries |
 | **HR Path (Invalidated)** | ~500ms + LLM | Force reload when `domain=hr_related` |
+| **MCP Execution** ✨ | ~500-2000ms | Calendar event creation + email invite |
 | **TTFT (Time to First Token)** | ~962ms | Typical for GPT-4o-mini |
 | **Total LLM Response** | ~2275ms | Medium-length response |
 | **Domain Check (Haiku)** | ~50-100ms | Claude Haiku classification |
@@ -949,6 +1007,8 @@ Real-world latency measurements from production:
 | **Question Generation** | ~2-3s | Personalized questions with context |
 | **Email Generation** | ~2-3s | Personalized emails with candidate data |
 | **Candidate Comparison** | ~50ms | Deterministic, no LLM (direct_response) |
+| **TTS Synthesis** ✨ | ~3-6s | Kokoro ONNX audio generation |
+| **TTS Sync delay** ✨ | ~100-170ms/word | Real WAV duration (+30% faster) |
 
 ### Optimization Impact
 
@@ -1106,5 +1166,7 @@ For questions or issues:
 - **Frontend:** Angular 19 + Signals + RxJS + Material UI
 - **Backend:** LangGraph + FastAPI + PostgreSQL
 - **AI Models:** GPT-4o-mini (OpenAI) + Claude Haiku (Anthropic)
+- **Voice:** Groq Whisper (STT) + Kokoro ONNX (TTS)
+- **Integrations:** Google Calendar + Gmail (MCP)
 - **State Management:** LangGraph PostgresSaver checkpointer
 - **Deployment:** Firebase Hosting + Railway

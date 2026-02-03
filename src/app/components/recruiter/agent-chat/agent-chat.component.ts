@@ -54,6 +54,7 @@ export class AgentChatComponent implements OnInit {
 
   // start Voice
   speakIsEnabled: boolean = false; // Controla si TTS está activado
+  selectedVoice: string = 'af_heart'; // Voz por defecto del backend TTS (af_heart, af_bella, em_alex, ef_dora, ff_siwis)
   // End Voice
 
   // STT - Speech to Text (grabación de audio)
@@ -446,6 +447,9 @@ export class AgentChatComponent implements OnInit {
     const responseIndex = this.chatMessages.length - 1;
 
     // Usar el servicio para el streaming
+    // Si speakIsEnabled está activo, pasar la voz seleccionada para TTS del backend
+    const voiceParam = this.speakIsEnabled ? this.selectedVoice : undefined;
+
     this.agentChatService.streamResponse(
       message,
       threadId,
@@ -465,8 +469,12 @@ export class AgentChatComponent implements OnInit {
         }
       },
       () => this.scrollToBottom(),
-      (text) => this.speakText(text),
-      (errorMessage) => {
+      // Solo usar browser TTS si NO está habilitado el TTS del backend
+      // Cuando speakIsEnabled=true, el backend envía audios que se reproducen via enqueueAudio
+      (_text) => {
+        // No hacer nada - el TTS del backend maneja la reproducción via audio events
+      },
+      (_errorMessage) => {
         // Callback de error - forzar detección de cambios
         this.chatMessages = [...this.chatMessages];
         // 💾 Guardar en caché incluso si hay error
@@ -476,7 +484,8 @@ export class AgentChatComponent implements OnInit {
         // 🎯 Callback cuando cambia el estado del agente
         console.log('🔄 Actualizando estado del agente a:', state);
         this.currentAgentState.set(state as AgentState);
-      }
+      },
+      voiceParam // 🔊 Pasar voz si TTS está habilitado
     );
 
     this.userMessage = "";
@@ -495,8 +504,12 @@ export class AgentChatComponent implements OnInit {
 
   toggleSpeak(): void {
     this.speakIsEnabled = !this.speakIsEnabled;
-    console.log('el speack esta ==> ' + this.speakIsEnabled);
-    
+    console.log('🔊 TTS está ==> ' + this.speakIsEnabled);
+
+    // Si se desactiva TTS, detener cualquier audio en reproducción
+    if (!this.speakIsEnabled) {
+      this.agentChatService.stopAudioPlayback();
+    }
   }
 
   async clearChatHistory(): Promise<void> {
@@ -507,6 +520,9 @@ export class AgentChatComponent implements OnInit {
     }
 
     console.log('🗑️ Eliminando thread completamente:', threadId);
+
+    // Detener cualquier audio en reproducción
+    this.agentChatService.stopAudioPlayback();
 
     // Limpiar mensajes en el frontend inmediatamente
     this.chatMessages = [];
@@ -729,8 +745,8 @@ export class AgentChatComponent implements OnInit {
       },
       // onScroll
       () => this.scrollToBottom(),
-      // onSpeakText
-      (text) => this.speakText(text),
+      // onSpeakText - No usar browser TTS, el backend maneja audio si está habilitado
+      (_text) => {},
       // onError
       (_errorMessage) => {
         this.cdr.detectChanges();
