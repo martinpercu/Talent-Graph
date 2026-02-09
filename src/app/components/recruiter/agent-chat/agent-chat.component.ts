@@ -710,6 +710,9 @@ export class AgentChatComponent implements OnInit {
     console.log('📤 Enviando audio...');
     console.log('🔵 ThreadId usado:', threadId);
 
+    // Si speakIsEnabled está activo, pasar la voz seleccionada para TTS del backend
+    const voiceParam = this.speakIsEnabled ? this.selectedVoice : undefined;
+
     // Usar el servicio para el streaming de audio
     this.agentChatService.streamAudioResponse(
       audioBlob,
@@ -757,7 +760,9 @@ export class AgentChatComponent implements OnInit {
         console.log('🔄 Actualizando estado del agente a:', state);
         this.currentAgentState.set(state as AgentState);
         this.cdr.detectChanges();
-      }
+      },
+      undefined, // language
+      voiceParam // 🔊 Pasar voz si TTS está habilitado
     );
 
     setTimeout(() => {

@@ -24,7 +24,8 @@ export class AgentChatService {
 
 
   // Cola de audios para reproducción secuencial (ordenada por sequence)
-  private audioQueue: { sequence: number; url: string }[] = [];
+  // Ahora soporta tanto URL como base64
+  private audioQueue: { sequence: number; data: string; isBase64: boolean }[] = [];
   private isPlayingAudio = false;
   private expectedSequence = 1; // Próxima secuencia esperada
   private streamEnded = false; // Indica si el stream terminó
@@ -155,10 +156,17 @@ export class AgentChatService {
                   onContentReceived(data.content);
                   onScroll();
                 } else if (data.type === 'audio') {
-                  // 🔊 Audio del TTS del backend
-                  console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}:`, data.url);
-                  const audioUrl = `${environment.BACK_AGENT_BRIDGE}${data.url}`;
-                  this.enqueueAudio(data.sequence, audioUrl);
+                  // 🔊 Audio del TTS del backend (soporta URL o base64)
+                  if (data.audio) {
+                    // Nuevo formato: base64
+                    console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}: base64`);
+                    this.enqueueAudio(data.sequence, data.audio, true);
+                  } else if (data.url) {
+                    // Formato antiguo: URL
+                    console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}:`, data.url);
+                    const audioUrl = `${environment.BACK_AGENT_BRIDGE}${data.url}`;
+                    this.enqueueAudio(data.sequence, audioUrl, false);
+                  }
                 } else if (data.type === 'end') {
                   // Fin del stream - marcar y comenzar reproducción ordenada
                   console.log(`⏱️ ${getElapsed()} 🏁 END - Total audios:`, data.audio_count);
@@ -321,7 +329,8 @@ export class AgentChatService {
   }
 
   /**
-   * Envía un audio y recibe la respuesta en modo streaming SSE
+   * Envía un audio al endpoint UNIFICADO y recibe la respuesta en modo streaming SSE
+   * NUEVO: Usa /chat_agent/{chat_id}/stream con FormData (mismo endpoint que texto)
    * El backend primero envía la transcripción, luego la respuesta del agente
    * @param audioBlob - Blob del audio grabado
    * @param threadId - ID del thread (conversación)
@@ -335,6 +344,7 @@ export class AgentChatService {
    * @param onError - Callback para manejar errores
    * @param onStateChange - Callback para notificar cambio de estado del agente
    * @param language - Idioma opcional para la transcripción ("es", "en", "fr")
+   * @param voice - Voz del backend TTS (af_heart, em_alex, ef_dora, ff_siwis)
    */
   streamAudioResponse(
     audioBlob: Blob,
@@ -348,12 +358,29 @@ export class AgentChatService {
     onSpeakText: (text: string) => void,
     onError: (errorMessage: string) => void,
     onStateChange?: (state: string) => void,
-    language?: string
+    language?: string,
+    voice?: string
   ): void {
-    console.log('🎤 Enviando audio al thread:', threadId);
+    console.log('🎤 Enviando audio al thread (endpoint unificado):', threadId);
 
-    const url = `${environment.BACK_AGENT_BRIDGE}/audio/chat/${threadId}`;
+    // ⏱️ Timestamp para medir timing de eventos
+    const streamStartTime = Date.now();
+    const getElapsed = () => `[${Date.now() - streamStartTime}ms]`;
 
+    // Limpiar cola de audios anterior y resetear estado
+    this.audioQueue = [];
+    this.isPlayingAudio = false;
+    this.expectedSequence = 1;
+    this.streamEnded = false;
+
+    // 🆕 ENDPOINT UNIFICADO: /chat_agent/{chat_id}/stream con query params
+    let url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
+    if (voice) {
+      url += `?voice=${voice}`;
+      console.log('🔊 Audio TTS habilitado con voz:', voice);
+    }
+
+    // 🆕 FormData para audio (NO Content-Type header, FormData lo setea automáticamente)
     const formData = new FormData();
     formData.append('file', audioBlob, 'audio.webm');
     formData.append('recruiterId', this.authService.getCurrentUserId() || '');
@@ -362,9 +389,11 @@ export class AgentChatService {
       formData.append('language', language);
     }
 
+    console.log(`⏱️ ${getElapsed()} Stream de audio iniciando...`);
+
     fetch(url, {
       method: 'POST',
-      body: formData
+      body: formData  // NO Content-Type header, FormData lo setea automáticamente
     })
     .then(response => {
       if (!response.ok) throw new Error('Network response was not ok');
@@ -377,7 +406,7 @@ export class AgentChatService {
       const readStream = () => {
         reader.read().then(({ done, value }) => {
           if (done) {
-            console.log('✅ Audio stream completado');
+            console.log(`⏱️ ${getElapsed()} ✅ Audio stream completado`);
             const the_message_finished = chatMessages[responseIndex].message;
 
             if (typeof the_message_finished === 'string' && the_message_finished.trim() !== '') {
@@ -397,19 +426,22 @@ export class AgentChatService {
                 const data = JSON.parse(line.substring(6));
 
                 if (data.type === 'transcription') {
-                  // Transcripción del audio del usuario
-                  console.log('📝 Transcripción recibida:', data.text);
+                  // 🆕 Transcripción del audio del usuario (llega PRIMERO)
+                  console.log(`⏱️ ${getElapsed()} 📝 Transcripción recibida:`, data.text);
                   onTranscription(data.text);
                   onScroll();
-                } else if (data.type === 'agent' || data.type === 'content') {
+                } else if (data.type === 'start') {
+                  // Evento de inicio
+                  console.log(`⏱️ ${getElapsed()} 🎬 Stream iniciado. Voice enabled:`, data.voice_enabled);
+                } else if (data.type === 'content') {
                   // Respuesta del agente
                   if (!firstContentReceived) {
                     onLoadingChange(false);
                     firstContentReceived = true;
-                    console.log('🚀 Primer contenido del agente recibido');
+                    console.log(`⏱️ ${getElapsed()} 🚀 Primer contenido del agente recibido`);
                   }
 
-                  const content = data.content || data.text || '';
+                  const content = data.content || '';
                   const currentMessage = chatMessages[responseIndex].message || '';
 
                   if (content === currentMessage) {
@@ -426,13 +458,25 @@ export class AgentChatService {
 
                   onContentReceived(content);
                   onScroll();
+                } else if (data.type === 'audio') {
+                  // 🔊 Audio del TTS del backend (soporta base64 o URL)
+                  if (data.audio) {
+                    console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}: base64`);
+                    this.enqueueAudio(data.sequence, data.audio, true);
+                  } else if (data.url) {
+                    console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}:`, data.url);
+                    const audioUrl = `${environment.BACK_AGENT_BRIDGE}${data.url}`;
+                    this.enqueueAudio(data.sequence, audioUrl, false);
+                  }
+                } else if (data.type === 'end') {
+                  // Fin del stream
+                  console.log(`⏱️ ${getElapsed()} 🏁 END`);
+                  this.onStreamEnd();
                 } else if (data.type === 'state_change') {
                   console.log('🔄 Cambio de estado detectado:', data.new_state);
                   if (onStateChange) {
                     onStateChange(data.new_state);
                   }
-                } else if (data.type === 'done') {
-                  console.log('✅ Stream done signal recibido');
                 } else if (data.type === 'error') {
                   console.error('❌ Error del servidor:', data.message);
                   chatMessages[responseIndex].message = "Error getting response. Please try again.";
@@ -510,13 +554,14 @@ export class AgentChatService {
 
   /**
    * Agrega un audio a la cola con su número de secuencia
-   * Comienza a reproducir inmediatamente si es la secuencia esperada
+   * Soporta tanto URL como base64
    * @param sequence - Número de secuencia del audio
-   * @param audioUrl - URL completa del audio a reproducir
+   * @param data - URL o base64 del audio
+   * @param isBase64 - true si es base64, false si es URL
    */
-  private enqueueAudio(sequence: number, audioUrl: string): void {
-    console.log(`📥 Encolando audio #${sequence}:`, audioUrl);
-    this.audioQueue.push({ sequence, url: audioUrl });
+  private enqueueAudio(sequence: number, data: string, isBase64: boolean = false): void {
+    console.log(`📥 Encolando audio #${sequence} (${isBase64 ? 'base64' : 'url'})`);
+    this.audioQueue.push({ sequence, data, isBase64 });
 
     // Si es la secuencia esperada y no estamos reproduciendo, empezar!
     if (sequence === this.expectedSequence && !this.isPlayingAudio) {
@@ -566,13 +611,18 @@ export class AgentChatService {
   }
 
   /**
-   * Reproduce un audio específico
+   * Reproduce un audio específico (soporta URL y base64)
    */
-  private playAudio(audioItem: { sequence: number; url: string }): void {
+  private playAudio(audioItem: { sequence: number; data: string; isBase64: boolean }): void {
     this.isPlayingAudio = true;
-    console.log(`▶️ Reproduciendo audio #${audioItem.sequence}:`, audioItem.url);
+    console.log(`▶️ Reproduciendo audio #${audioItem.sequence}`);
 
-    const audio = new Audio(audioItem.url);
+    // Convertir base64 a URL si es necesario
+    const audioSrc = audioItem.isBase64
+      ? `data:audio/mp3;base64,${audioItem.data}`
+      : audioItem.data;
+
+    const audio = new Audio(audioSrc);
 
     audio.onended = () => {
       console.log(`✅ Audio #${audioItem.sequence} terminado`);
