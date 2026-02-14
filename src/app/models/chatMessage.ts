@@ -4,6 +4,8 @@ export interface ChatMessage {
   content?: string;
 }
 
+export type AgentState = 'booking' | 'email' | 'question' | 'chat' | null;
+
 export interface ThreadHistoryResponse {
   exists: boolean;
   isEmpty: boolean;
@@ -11,5 +13,6 @@ export interface ThreadHistoryResponse {
   messageCount: number;
   threadId: string;
   lastUpdated: string | null;
+  current_state?: AgentState;
   messages: ChatMessage[];
 }

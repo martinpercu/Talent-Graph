@@ -112,7 +112,8 @@ export class AgentChatsListComponent {
       return;
     }
 
-    const confirmed = confirm(`¿Estás seguro de eliminar el chat "${thread.name}"?`);
+    const confirmed = confirm(`Are you sure you want to delete "${thread.name}"?`);
+    // const confirmed = confirm(`Estás seguro de eliminar el chat "${thread.name}"?`);
 
     if (confirmed) {
       console.log('🗑️ Eliminando thread:', threadId);

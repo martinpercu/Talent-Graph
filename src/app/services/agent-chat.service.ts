@@ -32,6 +32,7 @@ export class AgentChatService {
    * @param onLoadingChange - Callback para cambiar el estado de loading
    * @param onScroll - Callback para hacer scroll
    * @param onSpeakText - Callback para reproducir texto
+   * @param onStateChange - Callback para notificar cambio de estado del agente
    */
   streamResponse(
     message: string,
@@ -42,7 +43,8 @@ export class AgentChatService {
     onLoadingChange: (loading: boolean) => void,
     onScroll: () => void,
     onSpeakText: (text: string) => void,
-    onError: (errorMessage: string) => void
+    onError: (errorMessage: string) => void,
+    onStateChange?: (state: string) => void
   ): void {
     console.log('🔵 Usando threadId:', threadId);
 
@@ -119,8 +121,20 @@ export class AgentChatService {
 
                   chatMessages[responseIndex].message += data.content;
 
+                  // 📡 Capturar estado del agente si viene en el chunk
+                  if (data.state && onStateChange) {
+                    console.log('🎯 Estado del agente recibido:', data.state);
+                    onStateChange(data.state);
+                  }
+
                   onContentReceived(data.content);
                   onScroll();
+                } else if (data.type === 'state_change') {
+                  // 🔄 Evento de cambio de estado
+                  console.log('🔄 Cambio de estado detectado:', data.new_state);
+                  if (onStateChange) {
+                    onStateChange(data.new_state);
+                  }
                 } else if (data.type === 'error') {
                   console.error('❌ Error del servidor:', data.message);
                   chatMessages[responseIndex].message = "Error getting response. Please try again.";

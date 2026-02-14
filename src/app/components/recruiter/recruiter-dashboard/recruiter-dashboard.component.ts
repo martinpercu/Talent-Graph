@@ -128,6 +128,8 @@ export class RecruiterDashboardComponent {
 
   allowedExamsShow: boolean = true;
 
+  platformName: string = environment.WEBSITE_NAME;
+
 
 
   async ngOnInit() {
