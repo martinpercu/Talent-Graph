@@ -23,6 +23,13 @@ export class AgentChatService {
   }
 
 
+  // Cola de audios para reproducción secuencial (ordenada por sequence)
+  // Ahora soporta tanto URL como base64
+  private audioQueue: { sequence: number; data: string; isBase64: boolean }[] = [];
+  private isPlayingAudio = false;
+  private expectedSequence = 1; // Próxima secuencia esperada
+  private streamEnded = false; // Indica si el stream terminó
+
   /**
    * Envía un mensaje y recibe la respuesta en modo streaming
    * @param message - Mensaje a enviar
@@ -31,8 +38,9 @@ export class AgentChatService {
    * @param chatMessages - Referencia al array de mensajes
    * @param onLoadingChange - Callback para cambiar el estado de loading
    * @param onScroll - Callback para hacer scroll
-   * @param onSpeakText - Callback para reproducir texto
+   * @param onSpeakText - Callback para reproducir texto (fallback browser TTS)
    * @param onStateChange - Callback para notificar cambio de estado del agente
+   * @param voice - Voz del backend TTS (af_heart, em_alex, ef_dora, ff_siwis)
    */
   streamResponse(
     message: string,
@@ -44,12 +52,28 @@ export class AgentChatService {
     onScroll: () => void,
     onSpeakText: (text: string) => void,
     onError: (errorMessage: string) => void,
-    onStateChange?: (state: string) => void
+    onStateChange?: (state: string) => void,
+    voice?: string
   ): void {
     console.log('🔵 Usando threadId:', threadId);
 
-    const url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
+    // ⏱️ Timestamp para medir timing de eventos
+    const streamStartTime = Date.now();
+    const getElapsed = () => `[${Date.now() - streamStartTime}ms]`;
 
+    // Limpiar cola de audios anterior y resetear estado
+    this.audioQueue = [];
+    this.isPlayingAudio = false;
+    this.expectedSequence = 1;
+    this.streamEnded = false;
+
+    // Construir URL con voice si está definido
+    let url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
+    if (voice) {
+      url += `?voice=${voice}`;
+      console.log('🔊 TTS habilitado con voz:', voice);
+    }
+    console.log(`⏱️ ${getElapsed()} Stream iniciando...`);
 
     fetch(url, {
       method: 'POST',
@@ -73,8 +97,7 @@ export class AgentChatService {
       const readStream = () => {
         reader.read().then(({ done, value }) => {
           if (done) {
-            console.log('✅ Stream completado');
-            console.log("🎯 ACA YA TENGO TODO EL MENSAJE TERMINADO");
+            console.log(`⏱️ ${getElapsed()} ✅ Stream completado`);
             console.log("📝 Mensaje completo:", chatMessages[responseIndex].message);
             const the_message_finished = chatMessages[responseIndex].message;
 
@@ -99,7 +122,10 @@ export class AgentChatService {
               try {
                 const data = JSON.parse(line.substring(6));
 
-                if (data.type === 'content') {
+                if (data.type === 'start') {
+                  // Evento de inicio - indica si voice está habilitado
+                  console.log(`⏱️ ${getElapsed()} 🎬 Stream iniciado. Voice enabled:`, data.voice_enabled);
+                } else if (data.type === 'content') {
                   // Detener el loading cuando llega el primer contenido
                   if (!firstContentReceived) {
                     onLoadingChange(false);
@@ -108,7 +134,7 @@ export class AgentChatService {
                   }
 
                   // 🔍 DEBUG: Ver qué contenido llega del backend
-                  console.log('📦 Chunk recibido:', data.content);
+                  console.log(`⏱️ ${getElapsed()} 📦 CONTENT:`, data.content);
 
                   // ⚠️ IMPORTANTE: El backend envía el mensaje completo al final
                   // Si el chunk es igual al mensaje actual, NO agregarlo (evitar duplicado)
@@ -129,6 +155,22 @@ export class AgentChatService {
 
                   onContentReceived(data.content);
                   onScroll();
+                } else if (data.type === 'audio') {
+                  // 🔊 Audio del TTS del backend (soporta URL o base64)
+                  if (data.audio) {
+                    // Nuevo formato: base64
+                    console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}: base64`);
+                    this.enqueueAudio(data.sequence, data.audio, true);
+                  } else if (data.url) {
+                    // Formato antiguo: URL
+                    console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}:`, data.url);
+                    const audioUrl = `${environment.BACK_AGENT_BRIDGE}${data.url}`;
+                    this.enqueueAudio(data.sequence, audioUrl, false);
+                  }
+                } else if (data.type === 'end') {
+                  // Fin del stream - marcar y comenzar reproducción ordenada
+                  console.log(`⏱️ ${getElapsed()} 🏁 END - Total audios:`, data.audio_count);
+                  this.onStreamEnd();
                 } else if (data.type === 'state_change') {
                   // 🔄 Evento de cambio de estado
                   console.log('🔄 Cambio de estado detectado:', data.new_state);
@@ -287,6 +329,186 @@ export class AgentChatService {
   }
 
   /**
+   * Envía un audio al endpoint UNIFICADO y recibe la respuesta en modo streaming SSE
+   * NUEVO: Usa /chat_agent/{chat_id}/stream con FormData (mismo endpoint que texto)
+   * El backend primero envía la transcripción, luego la respuesta del agente
+   * @param audioBlob - Blob del audio grabado
+   * @param threadId - ID del thread (conversación)
+   * @param responseIndex - Índice del mensaje de respuesta en el array
+   * @param chatMessages - Referencia al array de mensajes
+   * @param onTranscription - Callback cuando llega la transcripción del audio
+   * @param onContentReceived - Callback cuando llega contenido del agente
+   * @param onLoadingChange - Callback para cambiar el estado de loading
+   * @param onScroll - Callback para hacer scroll
+   * @param onSpeakText - Callback para reproducir texto
+   * @param onError - Callback para manejar errores
+   * @param onStateChange - Callback para notificar cambio de estado del agente
+   * @param language - Idioma opcional para la transcripción ("es", "en", "fr")
+   * @param voice - Voz del backend TTS (af_heart, em_alex, ef_dora, ff_siwis)
+   */
+  streamAudioResponse(
+    audioBlob: Blob,
+    threadId: string,
+    responseIndex: number,
+    chatMessages: ChatMessage[],
+    onTranscription: (text: string) => void,
+    onContentReceived: (content: string) => void,
+    onLoadingChange: (loading: boolean) => void,
+    onScroll: () => void,
+    onSpeakText: (text: string) => void,
+    onError: (errorMessage: string) => void,
+    onStateChange?: (state: string) => void,
+    language?: string,
+    voice?: string
+  ): void {
+    console.log('🎤 Enviando audio al thread (endpoint unificado):', threadId);
+
+    // ⏱️ Timestamp para medir timing de eventos
+    const streamStartTime = Date.now();
+    const getElapsed = () => `[${Date.now() - streamStartTime}ms]`;
+
+    // Limpiar cola de audios anterior y resetear estado
+    this.audioQueue = [];
+    this.isPlayingAudio = false;
+    this.expectedSequence = 1;
+    this.streamEnded = false;
+
+    // 🆕 ENDPOINT UNIFICADO: /chat_agent/{chat_id}/stream con query params
+    let url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
+    if (voice) {
+      url += `?voice=${voice}`;
+      console.log('🔊 Audio TTS habilitado con voz:', voice);
+    }
+
+    // 🆕 FormData para audio (NO Content-Type header, FormData lo setea automáticamente)
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.webm');
+    formData.append('recruiterId', this.authService.getCurrentUserId() || '');
+    formData.append('max_threads', this.agentChatListService.getMaxThreads().toString());
+    if (language) {
+      formData.append('language', language);
+    }
+
+    console.log(`⏱️ ${getElapsed()} Stream de audio iniciando...`);
+
+    fetch(url, {
+      method: 'POST',
+      body: formData  // NO Content-Type header, FormData lo setea automáticamente
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let firstContentReceived = false;
+
+      const readStream = () => {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            console.log(`⏱️ ${getElapsed()} ✅ Audio stream completado`);
+            const the_message_finished = chatMessages[responseIndex].message;
+
+            if (typeof the_message_finished === 'string' && the_message_finished.trim() !== '') {
+              onSpeakText(the_message_finished);
+            }
+            return;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.substring(6));
+
+                if (data.type === 'transcription') {
+                  // 🆕 Transcripción del audio del usuario (llega PRIMERO)
+                  console.log(`⏱️ ${getElapsed()} 📝 Transcripción recibida:`, data.text);
+                  onTranscription(data.text);
+                  onScroll();
+                } else if (data.type === 'start') {
+                  // Evento de inicio
+                  console.log(`⏱️ ${getElapsed()} 🎬 Stream iniciado. Voice enabled:`, data.voice_enabled);
+                } else if (data.type === 'content') {
+                  // Respuesta del agente
+                  if (!firstContentReceived) {
+                    onLoadingChange(false);
+                    firstContentReceived = true;
+                    console.log(`⏱️ ${getElapsed()} 🚀 Primer contenido del agente recibido`);
+                  }
+
+                  const content = data.content || '';
+                  const currentMessage = chatMessages[responseIndex].message || '';
+
+                  if (content === currentMessage) {
+                    console.log('⚠️ Chunk duplicado detectado - IGNORADO');
+                    continue;
+                  }
+
+                  chatMessages[responseIndex].message += content;
+
+                  if (data.state && onStateChange) {
+                    console.log('🎯 Estado del agente recibido:', data.state);
+                    onStateChange(data.state);
+                  }
+
+                  onContentReceived(content);
+                  onScroll();
+                } else if (data.type === 'audio') {
+                  // 🔊 Audio del TTS del backend (soporta base64 o URL)
+                  if (data.audio) {
+                    console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}: base64`);
+                    this.enqueueAudio(data.sequence, data.audio, true);
+                  } else if (data.url) {
+                    console.log(`⏱️ ${getElapsed()} 🔊 AUDIO #${data.sequence}:`, data.url);
+                    const audioUrl = `${environment.BACK_AGENT_BRIDGE}${data.url}`;
+                    this.enqueueAudio(data.sequence, audioUrl, false);
+                  }
+                } else if (data.type === 'end') {
+                  // Fin del stream
+                  console.log(`⏱️ ${getElapsed()} 🏁 END`);
+                  this.onStreamEnd();
+                } else if (data.type === 'state_change') {
+                  console.log('🔄 Cambio de estado detectado:', data.new_state);
+                  if (onStateChange) {
+                    onStateChange(data.new_state);
+                  }
+                } else if (data.type === 'error') {
+                  console.error('❌ Error del servidor:', data.message);
+                  chatMessages[responseIndex].message = "Error getting response. Please try again.";
+                  onError("Error getting response. Please try again.");
+                  onLoadingChange(false);
+                }
+              } catch (e) {
+                console.error('Error parsing JSON:', e, line);
+              }
+            }
+          }
+
+          readStream();
+        }).catch(error => {
+          console.error('❌ Error en audio stream:', error);
+          chatMessages[responseIndex].message = "Error getting response. Please try again.";
+          onError("Error getting response. Please try again.");
+          onLoadingChange(false);
+        });
+      };
+
+      readStream();
+    })
+    .catch(error => {
+      console.error('❌ Error en fetch de audio:', error);
+      chatMessages[responseIndex].message = "❌ Error al enviar el audio. Por favor, intenta de nuevo.";
+      onError("Error sending audio");
+      onLoadingChange(false);
+    });
+  }
+
+  /**
    * Envía el mensaje trigger "start-loading-state" al backend
    * para que cargue el state inicial del agente con datos de la DB
    * @param threadId - ID del thread que se está iniciando
@@ -326,6 +548,110 @@ export class AgentChatService {
       console.error('❌ Error al enviar mensaje trigger:', error);
       // No lanzar error - es mejor que el sistema continúe aunque falle el trigger
     }
+  }
+
+  // ==================== Audio Queue Methods ====================
+
+  /**
+   * Agrega un audio a la cola con su número de secuencia
+   * Soporta tanto URL como base64
+   * @param sequence - Número de secuencia del audio
+   * @param data - URL o base64 del audio
+   * @param isBase64 - true si es base64, false si es URL
+   */
+  private enqueueAudio(sequence: number, data: string, isBase64: boolean = false): void {
+    console.log(`📥 Encolando audio #${sequence} (${isBase64 ? 'base64' : 'url'})`);
+    this.audioQueue.push({ sequence, data, isBase64 });
+
+    // Si es la secuencia esperada y no estamos reproduciendo, empezar!
+    if (sequence === this.expectedSequence && !this.isPlayingAudio) {
+      console.log(`🎯 Audio #${sequence} es la secuencia esperada - iniciando reproducción`);
+      this.tryPlayNext();
+    }
+  }
+
+  /**
+   * Se llama cuando el stream termina
+   * Si hay audios pendientes que no se reprodujeron, intentar reproducir
+   */
+  private onStreamEnd(): void {
+    this.streamEnded = true;
+    console.log('🏁 Stream terminado - verificando cola de audio');
+
+    // Si no estamos reproduciendo pero hay audios, intentar reproducir
+    if (!this.isPlayingAudio && this.audioQueue.length > 0) {
+      this.tryPlayNext();
+    }
+  }
+
+  /**
+   * Intenta reproducir el siguiente audio esperado si está disponible
+   */
+  private tryPlayNext(): void {
+    // Buscar el audio con la secuencia esperada
+    const audioIndex = this.audioQueue.findIndex(a => a.sequence === this.expectedSequence);
+
+    if (audioIndex !== -1) {
+      // Encontramos el audio esperado - reproducirlo
+      const audioItem = this.audioQueue.splice(audioIndex, 1)[0];
+      this.playAudio(audioItem);
+    } else if (this.streamEnded && this.audioQueue.length > 0) {
+      // Stream terminó pero no encontramos la secuencia esperada
+      // Ordenar y reproducir lo que queda (por si se perdió alguno)
+      this.audioQueue.sort((a, b) => a.sequence - b.sequence);
+      console.log(`⚠️ Secuencia #${this.expectedSequence} no encontrada, reproduciendo #${this.audioQueue[0].sequence}`);
+      const audioItem = this.audioQueue.shift()!;
+      this.expectedSequence = audioItem.sequence;
+      this.playAudio(audioItem);
+    } else {
+      // Audio esperado aún no llegó - esperar
+      console.log(`⏳ Esperando audio #${this.expectedSequence}...`);
+      this.isPlayingAudio = false;
+    }
+  }
+
+  /**
+   * Reproduce un audio específico (soporta URL y base64)
+   */
+  private playAudio(audioItem: { sequence: number; data: string; isBase64: boolean }): void {
+    this.isPlayingAudio = true;
+    console.log(`▶️ Reproduciendo audio #${audioItem.sequence}`);
+
+    // Convertir base64 a URL si es necesario
+    const audioSrc = audioItem.isBase64
+      ? `data:audio/mp3;base64,${audioItem.data}`
+      : audioItem.data;
+
+    const audio = new Audio(audioSrc);
+
+    audio.onended = () => {
+      console.log(`✅ Audio #${audioItem.sequence} terminado`);
+      this.expectedSequence = audioItem.sequence + 1;
+      this.tryPlayNext();
+    };
+
+    audio.onerror = (error) => {
+      console.error(`❌ Error reproduciendo audio #${audioItem.sequence}:`, error);
+      this.expectedSequence = audioItem.sequence + 1;
+      this.tryPlayNext();
+    };
+
+    audio.play().catch(error => {
+      console.error(`❌ Error al iniciar audio #${audioItem.sequence}:`, error);
+      this.expectedSequence = audioItem.sequence + 1;
+      this.tryPlayNext();
+    });
+  }
+
+  /**
+   * Detiene la reproducción y limpia la cola de audio
+   */
+  stopAudioPlayback(): void {
+    this.audioQueue = [];
+    this.isPlayingAudio = false;
+    this.expectedSequence = 1;
+    this.streamEnded = false;
+    console.log('⏹️ Reproducción de audio detenida');
   }
 
 }
