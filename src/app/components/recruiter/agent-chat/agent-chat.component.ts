@@ -51,10 +51,10 @@ export class AgentChatComponent implements OnInit {
   speakIsEnabled: boolean = false; // Controla si TTS está activado
   // End Voice
 
-  message_1: string = "Mensage 1"
-  message_2: string = "Mensage 2"
-  message_3: string = "easy"
-  message_4: string = "hard"
+  message_1: string = "Email"
+  message_2: string = "Questions"
+  message_3: string = "Compare"
+  message_4: string = "Schedule Interview"
 
   // Para rastrear el thread anterior
   private previousThreadId: string | null = null;
@@ -250,9 +250,9 @@ export class AgentChatComponent implements OnInit {
     this.previousThreadId = threadId;
   }
 
-  toggleShowLeftMenuHeader() {
-    this.visualStatesService.togleShowLeftMenu()
-  }
+  // toggleShowLeftMenuHeader() {
+  //   this.visualStatesService.togleShowLeftMenu()
+  // }
 
 
   scrollToBottomFromArrow(): void {
@@ -452,6 +452,8 @@ export class AgentChatComponent implements OnInit {
 
   toggleSpeak(): void {
     this.speakIsEnabled = !this.speakIsEnabled;
+    console.log('el speack esta ==> ' + this.speakIsEnabled);
+    
   }
 
   async clearChatHistory(): Promise<void> {
@@ -490,15 +492,19 @@ export class AgentChatComponent implements OnInit {
 
   // Nueva función para reproducir texto como voz
   speakText(text: string): void {
+    console.log("in Speack TEXT ==>" + text);
+    
+    // if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
+
     // VERY IMPORTANT ===> Clean the tail ==>  LIMPIAR LA COLA DE SPEECH!!!
     window.speechSynthesis.cancel(); // clean the reproduction queu
-
     if (!this.speakIsEnabled) return; // No reproducir si TTS está desactivado
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US'; // Idioma Inglés (puedes cambiar a 'es-US' u otros)
     utterance.volume = 1; // Volumen (0 a 1)
     utterance.rate = 1; // Velocidad (0.1 a 10)
-    utterance.pitch = 1; // Tono (0 a 2)
+    utterance.pitch = 0.5; // Tono (0 a 2)
 
     // Opcional: Seleccionar una voz específica
     // List of en-US inChrome: 'Samantha', 'Victoria', 'Alex', 'Fred' and 'Google US English'
