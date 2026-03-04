@@ -1,4 +1,4 @@
-# LangGraph Agent Backend - Bridge To Works (v3.6)
+# LangGraph Agent Backend - Talent-Graph (v3.6)
 
 This is the **production-ready LangGraph agent** (v3.6, February 2026) that powers the  TalentGraph recruitment platform's AI chat interface.
 
