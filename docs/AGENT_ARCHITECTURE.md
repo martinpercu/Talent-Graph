@@ -1,6 +1,6 @@
 # LangGraph Agent Backend - Bridge To Works (v3.6)
 
-This is the **production-ready LangGraph agent** (v3.6, February 2026) that powers the Bridge To Works recruitment platform's AI chat interface.
+This is the **production-ready LangGraph agent** (v3.6, February 2026) that powers the  TalentGraph recruitment platform's AI chat interface.
 
 ## 🎯 What This Demonstrates (v3.6)
 
@@ -646,4 +646,5 @@ The frontend implements an ordered audio queue:
 
 **Last updated:** 2026-02-01
 **Version:** 3.6.0
-**Backend Repository:** https://github.com/your-org/agent-back-bridgetoworks
+**Backend Repository:** https://github.com/martinpercu/agent-ai-bridge-to-works
+
