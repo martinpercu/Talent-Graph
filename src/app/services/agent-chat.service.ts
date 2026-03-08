@@ -570,6 +570,33 @@ export class AgentChatService {
   // ==================== Audio Queue Methods ====================
 
   /**
+   * Desbloquea el AudioContext dentro del event handler del gesto del usuario.
+   * Debe llamarse sincrónicamente en el click/tap handler, ANTES de cualquier await.
+   * Sin esto, Chrome/Android y algunos iOS no permiten reproducir audio programáticamente.
+   */
+  unlockAudioContext(): void {
+    try {
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        this.audioContext = new AudioContext();
+      }
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
+      // Reproducir un buffer silencioso de 1 frame — esto es lo que realmente desbloquea
+      // en Android Chrome y versiones estrictas de iOS Safari
+      const silentBuffer = this.audioContext.createBuffer(1, 1, 22050);
+      const source = this.audioContext.createBufferSource();
+      source.buffer = silentBuffer;
+      source.connect(this.audioContext.destination);
+      source.start(0);
+      console.log('🔓 AudioContext desbloqueado');
+    } catch (e) {
+      console.warn('⚠️ No se pudo desbloquear AudioContext:', e);
+    }
+  }
+
+
+  /**
    * Agrega un audio a la cola con su número de secuencia
    * Soporta tanto URL como base64
    * @param sequence - Número de secuencia del audio

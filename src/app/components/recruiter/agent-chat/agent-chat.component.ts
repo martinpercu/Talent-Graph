@@ -369,6 +369,8 @@ export class AgentChatComponent implements OnInit {
 
   async sendMessage(message: string, showUserMessage: boolean = true): Promise<void> {
     if (message.trim() === "") return;
+    // Desbloquear AudioContext sincrónicamente dentro del gesture handler (requerido por Chrome/Android)
+    if (this.speakIsEnabled) this.agentChatService.unlockAudioContext();
 
     // Obtener el threadId actual del servicio
     let threadId = this.agentChatListService.getCurrentThreadId();
@@ -600,6 +602,8 @@ export class AgentChatComponent implements OnInit {
    * Toggle de grabación - inicia o detiene según el estado actual
    */
   toggleRecording(): void {
+    // Desbloquear AudioContext sincrónicamente dentro del gesture handler (requerido por Chrome/Android)
+    if (this.speakIsEnabled) this.agentChatService.unlockAudioContext();
     if (this.isRecording()) {
       this.stopRecording();
     } else {
