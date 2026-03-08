@@ -24,11 +24,17 @@ export class AgentChatService {
 
 
   // Cola de audios para reproducción secuencial (ordenada por sequence)
-  // Ahora soporta tanto URL como base64
   private audioQueue: { sequence: number; data: string; isBase64: boolean }[] = [];
   private isPlayingAudio = false;
-  private expectedSequence = 1; // Próxima secuencia esperada
-  private streamEnded = false; // Indica si el stream terminó
+  private expectedSequence = 1;
+  private streamEnded = false;
+
+  // Web Audio API para reproducción gapless (sin gap entre chunks MP3)
+  private audioContext: AudioContext | null = null;
+  private nextAudioStartTime = 0;
+  // Cuántos segundos adelantar el inicio del siguiente audio para cubrir el silencio final del MP3.
+  // Ajustar según el backend: subir si aún se escucha silencio, bajar si se corta el contenido.
+  private readonly OVERLAP_SECONDS = 0.8;
 
   /**
    * Envía un mensaje y recibe la respuesta en modo streaming
@@ -66,6 +72,7 @@ export class AgentChatService {
     this.isPlayingAudio = false;
     this.expectedSequence = 1;
     this.streamEnded = false;
+    this.nextAudioStartTime = 0;
 
     // Construir URL con voice si está definido
     let url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
@@ -102,10 +109,17 @@ export class AgentChatService {
             const the_message_finished = chatMessages[responseIndex].message;
 
             if (typeof the_message_finished === 'string' && the_message_finished.trim() !== '') {
-              console.log("🔊 LLAMANDO A onSpeakText con:", the_message_finished.substring(0, 50) + "...");
-              onSpeakText(the_message_finished);
+              // Solo llamar browser TTS si el backend NO está manejando el audio (voice no definida)
+              if (!voice) {
+                console.log("🔊 LLAMANDO A browser TTS con:", the_message_finished.substring(0, 50) + "...");
+                onSpeakText(the_message_finished);
+              }
             } else {
-              console.log("⚠️ NO se llama a onSpeakText - mensaje vacío o no es string");
+              // Stream cerró sin contenido - asegurarse de quitar el loading para no quedar colgado
+              console.warn("⚠️ Stream cerró sin contenido - forzando fin de loading");
+              chatMessages[responseIndex].message = "⚠️ No se recibió respuesta. Por favor, intenta de nuevo.";
+              onLoadingChange(false);
+              onError("Empty response from server");
             }
             return;
           }
@@ -121,6 +135,8 @@ export class AgentChatService {
             if (line.startsWith('data: ')) {
               try {
                 const data = JSON.parse(line.substring(6));
+
+                console.log(`⏱️ ${getElapsed()} 📨 Evento:`, data.type, data);
 
                 if (data.type === 'start') {
                   // Evento de inicio - indica si voice está habilitado
@@ -372,6 +388,7 @@ export class AgentChatService {
     this.isPlayingAudio = false;
     this.expectedSequence = 1;
     this.streamEnded = false;
+    this.nextAudioStartTime = 0;
 
     // 🆕 ENDPOINT UNIFICADO: /chat_agent/{chat_id}/stream con query params
     let url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
@@ -611,36 +628,65 @@ export class AgentChatService {
   }
 
   /**
-   * Reproduce un audio específico (soporta URL y base64)
+   * Reproduce un audio específico usando Web Audio API para reproducción gapless.
+   * Schedula cada chunk en el tiempo exacto usando AudioContext, y avanza la cola
+   * OVERLAP_SECONDS antes del final real del audio para cubrir el silencio final del MP3.
    */
-  private playAudio(audioItem: { sequence: number; data: string; isBase64: boolean }): void {
+  private async playAudio(audioItem: { sequence: number; data: string; isBase64: boolean }): Promise<void> {
     this.isPlayingAudio = true;
-    console.log(`▶️ Reproduciendo audio #${audioItem.sequence}`);
+    console.log(`▶️ Schedulando audio #${audioItem.sequence}`);
 
-    // Convertir base64 a URL si es necesario
-    const audioSrc = audioItem.isBase64
-      ? `data:audio/mp3;base64,${audioItem.data}`
-      : audioItem.data;
+    try {
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        this.audioContext = new AudioContext();
+      }
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      const ctx = this.audioContext;
 
-    const audio = new Audio(audioSrc);
+      // Obtener ArrayBuffer del audio (base64 o URL)
+      let arrayBuffer: ArrayBuffer;
+      if (audioItem.isBase64) {
+        const binary = atob(audioItem.data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        arrayBuffer = bytes.buffer;
+      } else {
+        const response = await fetch(audioItem.data);
+        arrayBuffer = await response.arrayBuffer();
+      }
 
-    audio.onended = () => {
-      console.log(`✅ Audio #${audioItem.sequence} terminado`);
-      this.expectedSequence = audioItem.sequence + 1;
-      this.tryPlayNext();
-    };
+      // Decodificar → AudioBuffer con duración exacta
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      console.log(`🎵 Audio #${audioItem.sequence} decodificado. Duración: ${audioBuffer.duration.toFixed(3)}s`);
 
-    audio.onerror = (error) => {
+      // Schedular en el tiempo correcto (encadenado al anterior)
+      const startTime = Math.max(ctx.currentTime, this.nextAudioStartTime);
+      this.nextAudioStartTime = startTime + audioBuffer.duration - this.OVERLAP_SECONDS;
+
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.start(startTime);
+
+      console.log(`⏰ Audio #${audioItem.sequence} → start: ${startTime.toFixed(3)}s | próximo en: ${this.nextAudioStartTime.toFixed(3)}s`);
+
+      // Avanzar la cola OVERLAP_SECONDS antes del final real para que el siguiente
+      // esté listo (y schedulado) antes de que termine el silencio del MP3
+      const advanceQueueMs = (startTime - ctx.currentTime + audioBuffer.duration - this.OVERLAP_SECONDS) * 1000;
+      setTimeout(() => {
+        this.expectedSequence = audioItem.sequence + 1;
+        this.isPlayingAudio = false;
+        this.tryPlayNext();
+      }, Math.max(0, advanceQueueMs));
+
+    } catch (error) {
       console.error(`❌ Error reproduciendo audio #${audioItem.sequence}:`, error);
       this.expectedSequence = audioItem.sequence + 1;
+      this.isPlayingAudio = false;
       this.tryPlayNext();
-    };
-
-    audio.play().catch(error => {
-      console.error(`❌ Error al iniciar audio #${audioItem.sequence}:`, error);
-      this.expectedSequence = audioItem.sequence + 1;
-      this.tryPlayNext();
-    });
+    }
   }
 
   /**
@@ -651,6 +697,11 @@ export class AgentChatService {
     this.isPlayingAudio = false;
     this.expectedSequence = 1;
     this.streamEnded = false;
+    this.nextAudioStartTime = 0;
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
     console.log('⏹️ Reproducción de audio detenida');
   }
 
