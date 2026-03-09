@@ -33,8 +33,9 @@ export class AgentChatService {
   private audioContext: AudioContext | null = null;
   private nextAudioStartTime = 0;
   // Cuántos segundos adelantar el inicio del siguiente audio para cubrir el silencio final del MP3.
+  
   // Ajustar según el backend: subir si aún se escucha silencio, bajar si se corta el contenido.
-  private readonly OVERLAP_SECONDS = 0.8;
+  private readonly OVERLAP_SECONDS = environment.OVERLAP_SECONDS_AUDIO_SILENCE;
 
   /**
    * Envía un mensaje y recibe la respuesta en modo streaming
