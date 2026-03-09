@@ -479,7 +479,6 @@ export class AgentChatComponent implements OnInit {
       (loading) => {
         this.loadingResponse = loading;
         if (!loading) {
-          this.isStreaming.set(false);
           this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
         }
       },
@@ -500,7 +499,8 @@ export class AgentChatComponent implements OnInit {
         console.log('🔄 Actualizando estado del agente a:', state);
         this.currentAgentState.set(state as AgentState);
       },
-      voiceParam // 🔊 Pasar voz si TTS está habilitado
+      voiceParam,
+      () => this.isStreaming.set(false) // onStreamComplete
     );
 
     this.userMessage = "";
@@ -760,7 +760,6 @@ export class AgentChatComponent implements OnInit {
       (loading) => {
         this.loadingResponse = loading;
         if (!loading) {
-          this.isStreaming.set(false);
           this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
         }
         this.cdr.detectChanges();
@@ -781,7 +780,8 @@ export class AgentChatComponent implements OnInit {
         this.cdr.detectChanges();
       },
       undefined, // language
-      voiceParam // 🔊 Pasar voz si TTS está habilitado
+      voiceParam,
+      () => this.isStreaming.set(false) // onStreamComplete
     );
 
     setTimeout(() => {

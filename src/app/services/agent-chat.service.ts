@@ -26,6 +26,9 @@ export class AgentChatService {
   // AbortController del stream activo (texto o audio)
   private currentAbortController: AbortController | null = null;
 
+  // Flag para cancelar callbacks de audio ya programados
+  private audioPlaybackActive = false;
+
   // Cola de audios para reproducción secuencial (ordenada por sequence)
   private audioQueue: { sequence: number; data: string; isBase64: boolean }[] = [];
   private isPlayingAudio = false;
@@ -63,7 +66,8 @@ export class AgentChatService {
     onSpeakText: (text: string) => void,
     onError: (errorMessage: string) => void,
     onStateChange?: (state: string) => void,
-    voice?: string
+    voice?: string,
+    onStreamComplete?: () => void
   ): void {
     console.log('🔵 Usando threadId:', threadId);
 
@@ -77,6 +81,7 @@ export class AgentChatService {
     this.expectedSequence = 1;
     this.streamEnded = false;
     this.nextAudioStartTime = 0;
+    this.audioPlaybackActive = true;
 
     // Crear AbortController para este stream
     this.currentAbortController = new AbortController();
@@ -123,12 +128,14 @@ export class AgentChatService {
                 onSpeakText(the_message_finished);
               }
               onLoadingChange(false);
+              onStreamComplete?.();
             } else {
               // Stream cerró sin contenido - asegurarse de quitar el loading para no quedar colgado
               console.warn("⚠️ Stream cerró sin contenido - forzando fin de loading");
               chatMessages[responseIndex].message = "⚠️ No se recibió respuesta. Por favor, intenta de nuevo.";
               onLoadingChange(false);
               onError("Empty response from server");
+              onStreamComplete?.();
             }
             return;
           }
@@ -202,6 +209,11 @@ export class AgentChatService {
                   if (onStateChange) {
                     onStateChange(data.new_state);
                   }
+                } else if (data.type === 'cancelled') {
+                  console.log('⏹️ Backend confirmó cancelación del stream');
+                  onLoadingChange(false);
+                  onStreamComplete?.();
+                  return; // No procesar más chunks
                 } else if (data.type === 'error') {
                   console.error('❌ Error del servidor:', data.message);
                   chatMessages[responseIndex].message = "Error getting response. Please try again.";
@@ -216,6 +228,12 @@ export class AgentChatService {
 
           readStream();
         }).catch(error => {
+          if (error.name === 'AbortError') {
+            console.log('⏹️ readStream abortado por el usuario');
+            onLoadingChange(false);
+            onStreamComplete?.();
+            return;
+          }
           console.error('❌ Error en stream:', error);
           chatMessages[responseIndex].message = "Error getting response. Please try again.";
           onError("Error getting response. Please try again.");
@@ -229,6 +247,7 @@ export class AgentChatService {
       if (error.name === 'AbortError') {
         console.log('⏹️ Stream cancelado por el usuario');
         onLoadingChange(false);
+        onStreamComplete?.();
         return;
       }
 
@@ -268,6 +287,7 @@ export class AgentChatService {
 
       onError("Error in stream");
       onLoadingChange(false);
+      onStreamComplete?.();
     });
   }
 
@@ -390,7 +410,8 @@ export class AgentChatService {
     onError: (errorMessage: string) => void,
     onStateChange?: (state: string) => void,
     language?: string,
-    voice?: string
+    voice?: string,
+    onStreamComplete?: () => void
   ): void {
     console.log('🎤 Enviando audio al thread (endpoint unificado):', threadId);
 
@@ -404,6 +425,7 @@ export class AgentChatService {
     this.expectedSequence = 1;
     this.streamEnded = false;
     this.nextAudioStartTime = 0;
+    this.audioPlaybackActive = true;
 
     // 🆕 ENDPOINT UNIFICADO: /chat_agent/{chat_id}/stream con query params
     let url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
@@ -449,6 +471,7 @@ export class AgentChatService {
               onSpeakText(the_message_finished);
             }
             onLoadingChange(false);
+            onStreamComplete?.();
             return;
           }
 
@@ -514,6 +537,11 @@ export class AgentChatService {
                   if (onStateChange) {
                     onStateChange(data.new_state);
                   }
+                } else if (data.type === 'cancelled') {
+                  console.log('⏹️ Backend confirmó cancelación del stream de audio');
+                  onLoadingChange(false);
+                  onStreamComplete?.();
+                  return;
                 } else if (data.type === 'error') {
                   console.error('❌ Error del servidor:', data.message);
                   chatMessages[responseIndex].message = "Error getting response. Please try again.";
@@ -528,6 +556,12 @@ export class AgentChatService {
 
           readStream();
         }).catch(error => {
+          if (error.name === 'AbortError') {
+            console.log('⏹️ readStream de audio abortado por el usuario');
+            onLoadingChange(false);
+            onStreamComplete?.();
+            return;
+          }
           console.error('❌ Error en audio stream:', error);
           chatMessages[responseIndex].message = "Error getting response. Please try again.";
           onError("Error getting response. Please try again.");
@@ -541,12 +575,14 @@ export class AgentChatService {
       if (error.name === 'AbortError') {
         console.log('⏹️ Stream de audio cancelado por el usuario');
         onLoadingChange(false);
+        onStreamComplete?.();
         return;
       }
       console.error('❌ Error en fetch de audio:', error);
       chatMessages[responseIndex].message = "❌ Error al enviar el audio. Por favor, intenta de nuevo.";
       onError("Error sending audio");
       onLoadingChange(false);
+      onStreamComplete?.();
     });
   }
 
@@ -657,6 +693,7 @@ export class AgentChatService {
    * Intenta reproducir el siguiente audio esperado si está disponible
    */
   private tryPlayNext(): void {
+    if (!this.audioPlaybackActive) return; // stop fue llamado, no continuar
     // Buscar el audio con la secuencia esperada
     const audioIndex = this.audioQueue.findIndex(a => a.sequence === this.expectedSequence);
 
@@ -728,6 +765,7 @@ export class AgentChatService {
       // esté listo (y schedulado) antes de que termine el silencio del MP3
       const advanceQueueMs = (startTime - ctx.currentTime + audioBuffer.duration - this.OVERLAP_SECONDS) * 1000;
       setTimeout(() => {
+        if (!this.audioPlaybackActive) return; // stop fue llamado, no continuar
         this.expectedSequence = audioItem.sequence + 1;
         this.isPlayingAudio = false;
         this.tryPlayNext();
@@ -761,6 +799,7 @@ export class AgentChatService {
 
   stopAudioPlayback(): void {
     this.audioQueue = [];
+    this.audioPlaybackActive = false;
     this.isPlayingAudio = false;
     this.expectedSequence = 1;
     this.streamEnded = false;
