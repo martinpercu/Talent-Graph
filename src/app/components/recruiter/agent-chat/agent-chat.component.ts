@@ -50,6 +50,10 @@ export class AgentChatComponent implements OnInit {
 
   // Estado actual del agente
   currentAgentState = signal<AgentState>('chat');
+  showModesMenu = signal(false);
+
+  toggleModesMenu() { this.showModesMenu.update(v => !v); }
+  closeModesMenu() { this.showModesMenu.set(false); }
 
 
   // start Voice
