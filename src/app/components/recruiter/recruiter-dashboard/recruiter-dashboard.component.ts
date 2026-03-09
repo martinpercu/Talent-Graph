@@ -125,6 +125,7 @@ export class RecruiterDashboardComponent {
     = 'candidates'; // Default to courses
 
   showSettingMenu: boolean = false;
+  showMobileNav: boolean = false;
 
   allowedExamsShow: boolean = true;
 
@@ -288,6 +289,7 @@ export class RecruiterDashboardComponent {
       | 'admin_agent'
   ) {
     this.currentView = view;
+    this.showMobileNav = false;
   }
 
   switchExpand() {

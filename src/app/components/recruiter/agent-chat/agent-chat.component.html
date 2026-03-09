@@ -5,7 +5,7 @@
 
     <div class="w-full flex flex-row justify-between items-center h-[60px] shadow-sm pb-1 dark:border-b border-neutral-700">
 
-      <div (click)="visualStatesService.handleShowChatList()" class="z-10 p-2 sm:pr-4 flex flex-col items-end">
+      <div (click)="visualStatesService.handleShowChatList()" class="ml-12 sm:ml-0 z-10 p-2 sm:pr-4 flex flex-col items-end">
 
         <button
           class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-xl border border-gray-200 dark:border-neutral-700"
@@ -118,7 +118,7 @@
 
 
         <div
-          class="flex flex-col w-11/12 sm:w-11/12 md:w-11/12 lg:w-[640px] xl:w-[768px] p-3 mt-4 mb-16 sm:mb-6 gap-2 m-auto bg-white dark:bg-neutral-750 rounded-3xl shadow-sm sm:shadow-lg dark:shadow-none! border border-neutral-200 dark:border-neutral-600">
+          class="flex flex-col w-11/12 sm:w-11/12 md:w-11/12 lg:w-[640px] xl:w-[768px] p-3 mt-4 mb-4 sm:mb-6 gap-2 m-auto bg-white dark:bg-neutral-750 rounded-3xl shadow-sm sm:shadow-lg dark:shadow-none! border border-neutral-200 dark:border-neutral-600">
 
           @if (currentAgentState() !== 'chat' && currentAgentState() !== null) {
             <div class="flex items-center gap-2 px-3 py-1.5 text-xs rounded-full w-fit"
