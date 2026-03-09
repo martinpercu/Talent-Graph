@@ -51,9 +51,17 @@ export class AgentChatComponent implements OnInit {
   // Estado actual del agente
   currentAgentState = signal<AgentState>('chat');
   showModesMenu = signal(false);
+  isStreaming = signal(false);
 
   toggleModesMenu() { this.showModesMenu.update(v => !v); }
   closeModesMenu() { this.showModesMenu.set(false); }
+
+  stopCurrentStream(): void {
+    const threadId = this.agentChatListService.currentThreadId();
+    if (threadId) {
+      this.agentChatService.stopStream(threadId);
+    }
+  }
 
 
   // start Voice
@@ -439,6 +447,7 @@ export class AgentChatComponent implements OnInit {
     await this.agentChatListService.moveThreadToTop(threadId);
 
     this.loadingResponse = true;
+    this.isStreaming.set(true);
 
     if (showUserMessage) {
       this.chatMessages.push({ role: "user", message });
@@ -469,8 +478,8 @@ export class AgentChatComponent implements OnInit {
       },
       (loading) => {
         this.loadingResponse = loading;
-        // 💾 Guardar en caché cuando termina el loading
         if (!loading) {
+          this.isStreaming.set(false);
           this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
         }
       },
@@ -705,6 +714,7 @@ export class AgentChatComponent implements OnInit {
     await this.agentChatListService.moveThreadToTop(threadId);
 
     this.loadingResponse = true;
+    this.isStreaming.set(true);
 
     // Crear placeholder para el mensaje del usuario (se llenará con la transcripción)
     const userMessageIndex = this.chatMessages.length;
@@ -750,6 +760,7 @@ export class AgentChatComponent implements OnInit {
       (loading) => {
         this.loadingResponse = loading;
         if (!loading) {
+          this.isStreaming.set(false);
           this.agentChatListService.saveMessagesToCache(threadId, this.chatMessages);
         }
         this.cdr.detectChanges();

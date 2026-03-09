@@ -153,8 +153,17 @@
               </textarea>
             </div>
 
-            <!-- Botón de micrófono STT (visible cuando no hay texto) -->
-            @if (!userMessage) {
+            <!-- Botón STOP (visible mientras hay stream activo) -->
+            @if (isStreaming()) {
+              <div role="button" aria-label="Detener respuesta" tabindex="0"
+                class="flex w-max h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
+                (click)="stopCurrentStream()">
+                <mat-icon class="text-white dark:text-neutral-800">stop</mat-icon>
+              </div>
+            }
+
+            <!-- Botón de micrófono STT (visible cuando no hay texto y no hay stream) -->
+            @if (!userMessage && !isStreaming()) {
               <div role="button" aria-label="Grabar audio" tabindex="0"
                 class="flex w-max h-9 p-1.5 rounded-full cursor-pointer transition-all duration-200"
                 [ngClass]="{
@@ -169,8 +178,8 @@
               </div>
             }
 
-            <!-- Botón de enviar mensaje (visible cuando hay texto) -->
-            @if (userMessage) {
+            <!-- Botón de enviar mensaje (visible cuando hay texto y no hay stream) -->
+            @if (userMessage && !isStreaming()) {
               <div role="button" aria-label="Enviar mensaje" tabindex="0"
                 class="flex w-max h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
                 (click)="sendMessage(userMessage)">

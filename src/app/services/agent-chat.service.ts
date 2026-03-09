@@ -23,6 +23,9 @@ export class AgentChatService {
   }
 
 
+  // AbortController del stream activo (texto o audio)
+  private currentAbortController: AbortController | null = null;
+
   // Cola de audios para reproducción secuencial (ordenada por sequence)
   private audioQueue: { sequence: number; data: string; isBase64: boolean }[] = [];
   private isPlayingAudio = false;
@@ -75,6 +78,9 @@ export class AgentChatService {
     this.streamEnded = false;
     this.nextAudioStartTime = 0;
 
+    // Crear AbortController para este stream
+    this.currentAbortController = new AbortController();
+
     // Construir URL con voice si está definido
     let url = `${environment.BACK_AGENT_BRIDGE}/chat_agent/${threadId}/stream`;
     if (voice) {
@@ -85,6 +91,7 @@ export class AgentChatService {
 
     fetch(url, {
       method: 'POST',
+      signal: this.currentAbortController.signal,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -115,6 +122,7 @@ export class AgentChatService {
                 console.log("🔊 LLAMANDO A browser TTS con:", the_message_finished.substring(0, 50) + "...");
                 onSpeakText(the_message_finished);
               }
+              onLoadingChange(false);
             } else {
               // Stream cerró sin contenido - asegurarse de quitar el loading para no quedar colgado
               console.warn("⚠️ Stream cerró sin contenido - forzando fin de loading");
@@ -218,6 +226,12 @@ export class AgentChatService {
       readStream();
     })
     .catch(async error => {
+      if (error.name === 'AbortError') {
+        console.log('⏹️ Stream cancelado por el usuario');
+        onLoadingChange(false);
+        return;
+      }
+
       console.error('❌ Error en fetch:', error);
 
       // Verificar si el mensaje del usuario se guardó consultando el historial
@@ -407,10 +421,14 @@ export class AgentChatService {
       formData.append('language', language);
     }
 
+    // Crear AbortController para este stream
+    this.currentAbortController = new AbortController();
+
     console.log(`⏱️ ${getElapsed()} Stream de audio iniciando...`);
 
     fetch(url, {
       method: 'POST',
+      signal: this.currentAbortController.signal,
       body: formData  // NO Content-Type header, FormData lo setea automáticamente
     })
     .then(response => {
@@ -430,6 +448,7 @@ export class AgentChatService {
             if (typeof the_message_finished === 'string' && the_message_finished.trim() !== '') {
               onSpeakText(the_message_finished);
             }
+            onLoadingChange(false);
             return;
           }
 
@@ -519,6 +538,11 @@ export class AgentChatService {
       readStream();
     })
     .catch(error => {
+      if (error.name === 'AbortError') {
+        console.log('⏹️ Stream de audio cancelado por el usuario');
+        onLoadingChange(false);
+        return;
+      }
       console.error('❌ Error en fetch de audio:', error);
       chatMessages[responseIndex].message = "❌ Error al enviar el audio. Por favor, intenta de nuevo.";
       onError("Error sending audio");
@@ -720,6 +744,21 @@ export class AgentChatService {
   /**
    * Detiene la reproducción y limpia la cola de audio
    */
+  stopStream(threadId: string): void {
+    // 1. Cortar el fetch activo
+    this.currentAbortController?.abort();
+    this.currentAbortController = null;
+
+    // 2. Parar el audio
+    this.stopAudioPlayback();
+
+    // 3. Notificar al backend
+    this.http.post(`${environment.BACK_AGENT_BRIDGE}/threads/${threadId}/cancel`, {}).subscribe({
+      next: () => console.log('⏹️ Backend notificado de cancelación'),
+      error: (err) => console.warn('⚠️ No se pudo notificar al backend (puede que ya haya terminado):', err)
+    });
+  }
+
   stopAudioPlayback(): void {
     this.audioQueue = [];
     this.isPlayingAudio = false;
