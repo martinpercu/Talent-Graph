@@ -77,6 +77,9 @@ export class AgentChatService {
     const streamStartTime = Date.now();
     const getElapsed = () => `[${Date.now() - streamStartTime}ms]`;
 
+    // Abortar stream anterior si aún estaba corriendo
+    this.currentAbortController?.abort();
+
     // Limpiar cola de audios anterior y resetear estado
     this.audioQueue = [];
     this.isPlayingAudio = false;
