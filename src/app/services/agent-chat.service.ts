@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '@env/environment';
@@ -31,7 +31,9 @@ export class AgentChatService {
 
   // Cola de audios para reproducción secuencial (ordenada por sequence)
   private audioQueue: { sequence: number; data: string; isBase64: boolean }[] = [];
-  private isPlayingAudio = false;
+  readonly isPlayingAudioSig = signal(false);
+  private get isPlayingAudio() { return this.isPlayingAudioSig(); }
+  private set isPlayingAudio(val: boolean) { this.isPlayingAudioSig.set(val); }
   private expectedSequence = 1;
   private streamEnded = false;
 

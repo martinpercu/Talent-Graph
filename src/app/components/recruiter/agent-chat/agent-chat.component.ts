@@ -65,6 +65,7 @@ export class AgentChatComponent implements OnInit {
 
 
   // start Voice
+  isPlayingAudio = this.agentChatService.isPlayingAudioSig;
   speakIsEnabled: boolean = false; // Controla si TTS está activado
   selectedVoice: string = 'af_heart'; // Voz por defecto del backend TTS (af_heart, af_bella, em_alex, ef_dora, ff_siwis)
   // End Voice
