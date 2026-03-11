@@ -133,9 +133,13 @@
               [class.bg-purple-100]="currentAgentState() === 'question'"
               [class.text-purple-700]="currentAgentState() === 'question'"
               [class.dark:bg-purple-900]="currentAgentState() === 'question'"
-              [class.dark:text-purple-300]="currentAgentState() === 'question'">
-              <mat-icon class="!w-4 !h-4 !text-sm !-mt-1">{{ currentAgentState() === 'booking' ? 'calendar_clock' : currentAgentState() === 'email' ? 'mail' : 'question_exchange' }}</mat-icon>
-              <span class="font-medium">{{ currentAgentState() === 'booking' ? 'Booking Mode' : currentAgentState() === 'email' ? 'Email Mode' : 'Question Mode' }}</span>
+              [class.dark:text-purple-300]="currentAgentState() === 'question'"
+              [class.bg-cyan-100]="currentAgentState() === 'compare'"
+              [class.text-cyan-700]="currentAgentState() === 'compare'"
+              [class.dark:bg-cyan-900]="currentAgentState() === 'compare'"
+              [class.dark:text-cyan-300]="currentAgentState() === 'compare'">
+              <mat-icon class="!w-4 !h-4 !text-sm !-mt-1">{{ currentAgentState() === 'booking' ? 'calendar_clock' : currentAgentState() === 'email' ? 'mail' : currentAgentState() === 'compare' ? 'social_distance' : 'question_exchange' }}</mat-icon>
+              <span class="font-medium">{{ currentAgentState() === 'booking' ? 'Booking Mode' : currentAgentState() === 'email' ? 'Email Mode' : currentAgentState() === 'compare' ? 'Compare Mode' : 'Question Mode' }}</span>
             </div>
           }
 
@@ -179,55 +183,84 @@
 
           <div class="flex text-sm text-neutral-600 dark:text-neutral-350 gap-3 pl-2">
 
+            <!-- Modes dropdown -->
+            <div class="relative">
 
-            <div
-              [class.ring-2]="currentAgentState() === 'booking'"
-              [class.ring-blue-500]="currentAgentState() === 'booking'"
-              [class.bg-blue-50]="currentAgentState() === 'booking'"
-              [class.dark:bg-blue-900]="currentAgentState() === 'booking'"
-              class="flex cursor-pointer h-9 items-center px-2 md:px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
-              (click)="sendMessage(this.message_4, false)">
-              <mat-icon>calendar_clock</mat-icon>
-              <div class="hidden grow xs:block pl-2 truncate xs:max-w-32 sm:max-w-52 md:max-w-44 lg:max-w-60 xl:max-w-80">
-                <!-- {{this.message_4}} -->  book
+              <!-- Backdrop para cerrar al hacer click afuera -->
+              @if (showModesMenu()) {
+                <div class="fixed inset-0 z-40" (click)="closeModesMenu()"></div>
+              }
+
+              <!-- Botón trigger -->
+              <div
+                class="flex cursor-pointer h-9 items-center px-2 md:px-3 py-2 rounded-3xl border border-neutral-300 dark:border-neutral-600 transition-colors"
+                [class.bg-neutral-100]="showModesMenu()"
+                [class.dark:bg-neutral-600]="showModesMenu()"
+                [class.hover:bg-neutral-50]="!showModesMenu()"
+                [class.dark:hover:bg-neutral-500]="!showModesMenu()"
+                (click)="toggleModesMenu()">
+                <mat-icon>discover_tune</mat-icon>
+                <span class="hidden xs:block pl-2">Modes</span>
               </div>
+
+              <!-- Dropdown menu -->
+              @if (showModesMenu()) {
+                <div class="absolute bottom-full mb-2 left-0 z-50 bg-white dark:bg-neutral-700 rounded-2xl shadow-lg border border-neutral-200 dark:border-neutral-600 py-1.5 min-w-44 overflow-hidden">
+
+                  <!-- Book -->
+                  <div class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-600"
+                    [class.text-blue-600]="currentAgentState() === 'booking'"
+                    [class.dark:text-blue-400]="currentAgentState() === 'booking'"
+                    (click)="sendMessage(message_4, false); closeModesMenu()">
+                    <mat-icon class="!text-blue-500 !text-xl">calendar_clock</mat-icon>
+                    <span class="grow">Book</span>
+                    @if (currentAgentState() === 'booking') {
+                      <mat-icon class="!text-blue-500 !text-base">check_circle</mat-icon>
+                    }
+                  </div>
+
+                  <!-- Email -->
+                  <div class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-600"
+                    [class.text-green-600]="currentAgentState() === 'email'"
+                    [class.dark:text-green-400]="currentAgentState() === 'email'"
+                    (click)="sendMessage(message_1, false); closeModesMenu()">
+                    <mat-icon class="!text-green-500 !text-xl">mail</mat-icon>
+                    <span class="grow">Email</span>
+                    @if (currentAgentState() === 'email') {
+                      <mat-icon class="!text-green-500 !text-base">check_circle</mat-icon>
+                    }
+                  </div>
+
+                  <!-- Question -->
+                  <div class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-600"
+                    [class.text-purple-600]="currentAgentState() === 'question'"
+                    [class.dark:text-purple-400]="currentAgentState() === 'question'"
+                    (click)="sendMessage(message_2, false); closeModesMenu()">
+                    <mat-icon class="!text-purple-500 !text-xl">question_exchange</mat-icon>
+                    <span class="grow">Question</span>
+                    @if (currentAgentState() === 'question') {
+                      <mat-icon class="!text-purple-500 !text-base">check_circle</mat-icon>
+                    }
+                  </div>
+
+                  <!-- Compare -->
+                  <div class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-600"
+                    [class.text-cyan-600]="currentAgentState() === 'compare'"
+                    [class.dark:text-cyan-400]="currentAgentState() === 'compare'"
+                    (click)="sendMessage(message_3, false); closeModesMenu()">
+                    <mat-icon class="!text-cyan-500 !text-xl">social_distance</mat-icon>
+                    <span class="grow">Compare</span>
+                    @if (currentAgentState() === 'compare') {
+                      <mat-icon class="!text-cyan-500 !text-base">check_circle</mat-icon>
+                    }
+                  </div>
+
+                </div>
+              }
+
             </div>
 
-            <div
-              [class.ring-2]="currentAgentState() === 'email'"
-              [class.ring-green-500]="currentAgentState() === 'email'"
-              [class.bg-green-50]="currentAgentState() === 'email'"
-              [class.dark:bg-green-900]="currentAgentState() === 'email'"
-              class="flex cursor-pointer h-9 items-center px-2 md:px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
-              (click)="sendMessage(this.message_1, false)">
-              <mat-icon>mail</mat-icon>
-              <div class="hidden grow xs:block pl-2 truncate xs:max-w-32 sm:max-w-52 md:max-w-44 lg:max-w-60 xl:max-w-80">
-                <!-- {{this.message_1}} --> email
-              </div>
-            </div>
 
-            <div
-              [class.ring-2]="currentAgentState() === 'question'"
-              [class.ring-purple-500]="currentAgentState() === 'question'"
-              [class.bg-purple-50]="currentAgentState() === 'question'"
-              [class.dark:bg-purple-900]="currentAgentState() === 'question'"
-              class="flex cursor-pointer h-9 items-center px-2 md:px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
-              (click)="sendMessage(this.message_2, false)">
-              <mat-icon>question_exchange</mat-icon>
-              <div class="hidden grow xs:block pl-2 truncate xs:max-w-32 sm:max-w-52 md:max-w-44 lg:max-w-60 xl:max-w-80">
-                <!-- {{this.message_2}} --> question
-              </div>
-            </div>
-
-
-            <!-- <div
-              class="flex cursor-pointer h-9 items-center px-2 md:px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-500 rounded-3xl border border-neutral-300 dark:border-neutral-600"
-              (click)="sendMessage(this.message_3, false)">
-              <mat-icon>compare</mat-icon>
-              <div class="pl-2 hidden md:block">
-                compare
-              </div>
-            </div> -->
 
             <div class="grow"></div>
 

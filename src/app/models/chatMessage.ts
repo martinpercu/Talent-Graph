@@ -4,7 +4,7 @@ export interface ChatMessage {
   content?: string;
 }
 
-export type AgentState = 'booking' | 'email' | 'question' | 'chat' | null;
+export type AgentState = 'booking' | 'email' | 'question' | 'compare' | 'chat' | null;
 
 export interface ThreadHistoryResponse {
   exists: boolean;
