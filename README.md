@@ -78,8 +78,46 @@ The recruitment intelligence is powered by a **production-ready LangGraph agent*
 - **Multi-language Support**: Automatic detection and response in Spanish, English, or French
 - **Speech-to-Text (STT)** ✨ NEW: Record audio and send to backend via Groq Whisper transcription
 - **Text-to-Speech (TTS)** ✨ NEW: Synchronized audio playback with Kokoro ONNX (multiple voices: af_heart, em_alex, ef_dora, ff_siwis)
+- **Voice Activity Detection (VAD)** ✨ NEW: Real-time silence detection via Web Audio API — auto-stops recording when the user stops talking
+- **Auto-Listen Mode** ✨ NEW: After the agent responds, microphone re-activates automatically for hands-free back-and-forth conversation
+- **Stream Cancellation** ✨ NEW: STOP button aborts active SSE stream and audio playback at any point, resetting auto-listen
+- **Microphone Permission Management** ✨ NEW: Permission state detection with visual feedback and cross-browser codec fallback (WebM/MP4)
 - **UI State Communication** ✨ NEW: Backend sends current_state for frontend UI adaptation (booking, email, question, compare, chat)
 - **Session Persistence**: Thread history maintained across sessions with PostgreSQL checkpointing
+
+### 🎙️ Voice Pipeline (VAD + Auto-Listen)
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant VAD as VAD (AnalyserNode RAF loop)
+    participant BE as Backend (SSE)
+    participant TTS as TTS Playback
+
+    U->>VAD: Mic on — manual click or auto-listen trigger
+    Note over VAD: Grace period<br/>Manual 1s · Auto-listen 4s
+
+    loop requestAnimationFrame
+        VAD->>VAD: measure dBFS
+        Note over VAD: dBFS ≥ −35 → vadHadSpeech = true (always, incl. grace)
+        VAD->>VAD: after grace: silence > 1500ms → stop
+    end
+
+    alt vadHadSpeech = false
+        VAD-->>U: audio discarded (silence only)
+    else vadHadSpeech = true
+        VAD->>BE: POST /audio/chat/{threadId}/stream
+        BE-->>U: SSE text chunks (streamed)
+        BE-->>TTS: audio URLs (if TTS on)
+        TTS-->>U: gapless playback · isPlayingAudioSig updated
+    end
+
+    alt natural end (isStreaming=false AND isPlayingAudio=false)
+        VAD->>U: 100ms → mic re-activates (auto-listen)
+    else user pressed STOP
+        VAD-->>U: AbortController · cancelAutoListen() · manual mic only
+    end
+```
 
 ### Candidate Screening
 - **Resume Parsing**: Automated extraction of skills, experience, education, and certifications
@@ -460,6 +498,7 @@ Detailed documentation on the LangGraph agent implementation:
 - **Framework:** Angular 19 (standalone components, signals)
 - **UI:** Angular Material 19 + Tailwind CSS 3.4
 - **i18n:** Transloco (English, Spanish, French)
+- **Audio:** Web Audio API — `AnalyserNode` for real-time VAD, `AudioContext` + `AudioBufferSourceNode` for gapless TTS playback, `MediaRecorder` with WebM/MP4 codec fallback
 - **Build:** Angular CLI 19
 
 ### Backend & Services
@@ -556,7 +595,7 @@ firebase deploy
 src/app/
 ├── components/
 │   ├── recruiter/                 # Main recruiter features
-│   │   ├── agent-chat/            # ⭐ LangGraph agent interface
+│   │   ├── agent-chat/            # ⭐ LangGraph agent interface (STT, TTS, VAD, auto-listen)
 │   │   ├── agent-chats-list/      # Thread management (WIP)
 │   │   ├── recruiter-dashboard/   # Central hub with view switching
 │   │   ├── jobs-list/             # Job postings table
@@ -849,6 +888,41 @@ data: {"type": "done"}
 GET /audio/temp/{filename}
 ```
 
+### Frontend Voice Pipeline
+
+The frontend manages the full audio lifecycle independently of the backend:
+
+**VAD Timing Parameters** (tunable in `agent-chat.component.ts`):
+| Constant | Default | Description |
+|---|---|---|
+| `VAD_SILENCE_THRESHOLD` | `-35 dB` | Volume floor — below this = silence |
+| `VAD_SILENCE_DURATION_MS` | `1500 ms` | Consecutive silence needed to auto-stop |
+| `VAD_MIN_RECORDING_MS` | `1000 ms` | Grace period for manual recording |
+| `VAD_MIN_RECORDING_MS_AUTO` | `4000 ms` | Grace period for auto-listen (user needs time to think) |
+
+**Auto-Listen completion logic:**
+```typescript
+// Triggers only when everything is truly done
+const allDone = !isStreaming && (
+  !ttsEnabled     ||   // TTS off: wait for stream only
+  !hadAudio       ||   // TTS on but no audio arrived: don't wait
+  !isPlayingAudio      // TTS on + audio played: wait for last chunk
+);
+```
+
+**Codec detection** (cross-browser):
+```typescript
+const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+  ? 'audio/webm;codecs=opus'   // Chrome, Firefox, Android
+  : 'audio/mp4';                // iOS Safari fallback
+```
+
+**Stream cancellation** — STOP button calls `stopStream()` which:
+1. Aborts the active SSE fetch via `AbortController`
+2. Stops audio playback and closes `AudioContext`
+3. Calls `POST /threads/{threadId}/cancel` to notify the backend
+4. Disables auto-listen (`cancelAutoListen()`) — user must click mic manually to resume
+
 ## 🎯 Subscription Tiers
 
 | Level | Max Threads | Features |
@@ -947,7 +1021,7 @@ async streamResponse(message: string, threadId: string) {
 }
 ```
 
-## 🎯 Production Features (v3.6)
+## 🎯 Production Features (v3.7)
 
 - ✅ **Real-time AI Chat**: LangGraph-powered agent with streaming
 - ✅ **Multi-threading**: Parallel conversation contexts
@@ -957,6 +1031,10 @@ async streamResponse(message: string, threadId: string) {
 - ✅ **Job Posting**: Full CRUD with advanced options
 - ✅ **Speech-to-Text** ✨ NEW: Audio input via Groq Whisper transcription
 - ✅ **Text-to-Speech** ✨ NEW: Synchronized audio output via Kokoro ONNX (multiple voices)
+- ✅ **Voice Activity Detection (VAD)** ✨ NEW: Web Audio API silence detection — auto-stops recording, discards empty audio
+- ✅ **Auto-Listen Mode** ✨ NEW: Hands-free back-and-forth — mic re-activates automatically after agent responds (TTS-aware)
+- ✅ **Stream Cancellation** ✨ NEW: STOP button aborts SSE stream + audio queue at any point, notifies backend
+- ✅ **Mic Permission Detection** ✨ NEW: Real-time permission state with `mic_off` visual indicator and i18n alert
 - ✅ **MCP Integration** ✨ NEW: Calendar scheduling + Gmail email sending
 - ✅ **UI State Communication** ✨ NEW: Backend sends state for frontend adaptation
 - ✅ **Google OAuth**: Secure, frictionless authentication
@@ -970,7 +1048,7 @@ async streamResponse(message: string, threadId: string) {
 
 ---
 
-## ⚡ Performance Metrics (v3.6)
+## ⚡ Performance Metrics (v3.7)
 
 Real-world latency measurements from production:
 

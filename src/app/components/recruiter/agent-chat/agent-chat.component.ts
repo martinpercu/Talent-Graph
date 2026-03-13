@@ -15,7 +15,7 @@ import { ChatMessage, AgentState } from '@models/chatMessage';
 import { VisualStatesService } from '@services/visual-states.service';
 import { AgentChatService } from '@services/agent-chat.service';
 import { AgentChatListService } from '@services/agent-chat-list.service';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { AgentChatsListComponent } from '@recruiter/agent-chats-list/agent-chats-list.component';
 
@@ -37,6 +37,7 @@ export class AgentChatComponent implements OnInit {
   visualStatesService = inject(VisualStatesService);
   agentChatService = inject(AgentChatService);
   agentChatListService = inject(AgentChatListService);
+  private transloco = inject(TranslocoService);
 
 
   userMessage: string = '';
@@ -61,19 +62,65 @@ export class AgentChatComponent implements OnInit {
     if (threadId) {
       this.agentChatService.stopStream(threadId);
     }
+    // STOP manual: cancelar auto-listen para que el user retome control
+    this.cancelAutoListen();
+  }
+
+  private scheduleAutoListen(): void {
+    if (this.autoListenTimeoutId !== null) return; // ya hay uno programado
+    // Pequeño tick para dejar que Angular termine el ciclo de detección antes de grabar
+    this.autoListenTimeoutId = setTimeout(() => {
+      this.autoListenTimeoutId = null;
+      this.autoListenEnabled = false;
+      if (!this.isRecording() && !this.isStreaming() && !this.isPlayingAudio()) {
+        this.startRecording(this.VAD_MIN_RECORDING_MS_AUTO);
+      }
+    }, 100);
+  }
+
+  private cancelAutoListen(): void {
+    this.autoListenEnabled = false;
+    if (this.autoListenTimeoutId !== null) {
+      clearTimeout(this.autoListenTimeoutId);
+      this.autoListenTimeoutId = null;
+    }
   }
 
 
   // start Voice
   isPlayingAudio = this.agentChatService.isPlayingAudioSig;
-  speakIsEnabled: boolean = false; // Controla si TTS está activado
+  speakIsEnabled: boolean = false;
+
+  // Auto-listen: reactivar mic automáticamente tras respuesta de voz
+  private autoListenEnabled = false;
+  private autoListenTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
   selectedVoice: string = 'af_heart'; // Voz por defecto del backend TTS (af_heart, af_bella, em_alex, ef_dora, ff_siwis)
   // End Voice
 
   // STT - Speech to Text (grabación de audio)
   isRecording = signal(false);
+  micPermission = signal<'granted' | 'denied' | 'prompt' | 'unsupported'>('prompt');
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
+
+  // VAD - Voice Activity Detection (PROVISORIO - toggle para testear con/sin)
+  readonly VAD_ENABLED = true; // 👈 cambiar a false para desactivar VAD
+  readonly VAD_SILENCE_THRESHOLD = -35;  // dB — por debajo = silencio
+  private readonly VAD_SILENCE_DURATION_MS = 1500; // ms de silencio para auto-stop
+  private readonly VAD_MIN_RECORDING_MS = 1000;      // ms mínimos antes de detectar silencio (manual)
+  private readonly VAD_MIN_RECORDING_MS_AUTO = 4000; // ms mínimos en auto-listen (el user necesita procesar la respuesta)
+  private vadAudioContext: AudioContext | null = null;
+  private vadAnalyser: AnalyserNode | null = null;
+  private vadRafId: number | null = null;
+  private vadCurrentMinRecordingMs = this.VAD_MIN_RECORDING_MS; // valor activo, se sobreescribe antes de cada loop
+  private vadSilenceStart: number | null = null;
+  private vadRecordingStart: number = 0;
+  private vadHadSpeech = false; // true si el user habló en algún momento
+  // PROVISORIO: señal con el dB actual para debug visual en template
+  vadCurrentDb = signal<number>(-Infinity);
+  // End VAD
+
   // End STT
 
   message_1: string = "Email"
@@ -117,11 +164,39 @@ export class AgentChatComponent implements OnInit {
         }, 100);
       }
     });
+
+    // 👂 Auto-listen: detectar cuando terminó todo (stream + audio si TTS activo)
+    effect(() => {
+      const streamDone   = !this.isStreaming();
+      const audioDone    = !this.isPlayingAudio();
+      const hadAudio     = this.agentChatService.hadAudioThisStream();
+
+      const allDone = streamDone && (
+        !this.speakIsEnabled ||  // TTS off: solo esperar stream
+        !hadAudio           ||  // TTS on pero no llegó audio: no hay nada más que esperar
+        audioDone                // TTS on + hubo audio: esperar que termine
+      );
+
+      if (allDone && this.autoListenEnabled) {
+        this.scheduleAutoListen();
+      }
+    });
   }
 
   async ngOnInit(): Promise<void> {
     // Limpiar threads vacíos con nombre ". . ." al cargar el componente
     await this.cleanEmptyThreads();
+
+    // Consultar estado del permiso de micrófono (sin pedirlo)
+    try {
+      const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      this.micPermission.set(result.state as 'granted' | 'denied' | 'prompt');
+      // Escuchar cambios en tiempo real (user puede cambiar permisos sin recargar)
+      result.onchange = () => this.micPermission.set(result.state as 'granted' | 'denied' | 'prompt');
+    } catch {
+      // iOS Safari no soporta permissions.query para microphone
+      this.micPermission.set('unsupported');
+    }
 
     // El effect ya se encargará de cargar los mensajes iniciales
   }
@@ -616,42 +691,63 @@ export class AgentChatComponent implements OnInit {
    * Toggle de grabación - inicia o detiene según el estado actual
    */
   toggleRecording(): void {
+    if (this.micPermission() === 'denied') {
+      alert(this.transloco.translate('agent.mic_permission_denied'));
+      return;
+    }
+
     // Desbloquear AudioContext sincrónicamente dentro del gesture handler (requerido por Chrome/Android)
     if (this.speakIsEnabled) this.agentChatService.unlockAudioContext();
+
+    // VAD: crear AudioContext aquí (síncrono dentro del gesto) para iOS
+    if (this.VAD_ENABLED && !this.isRecording()) {
+      this.vadAudioContext = new AudioContext();
+    }
+
     if (this.isRecording()) {
       this.stopRecording();
     } else {
+      // Click manual: cancelar cualquier auto-listen pendiente y grabar sin auto-reactivación
+      this.cancelAutoListen();
       this.startRecording();
     }
   }
 
   /**
-   * Inicia la grabación de audio usando MediaRecorder
+   * Inicia la grabación de audio usando MediaRecorder.
+   * Si VAD_ENABLED, conecta un AnalyserNode para detectar silencio y auto-detener.
    */
-  async startRecording(): Promise<void> {
+  async startRecording(minRecordingMs: number = this.VAD_MIN_RECORDING_MS): Promise<void> {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.micPermission.set('granted');
 
-      this.mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
+      // Codec fallback: iOS Safari no soporta audio/webm, solo audio/mp4
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/mp4')
+          ? 'audio/mp4'
+          : '';
 
+      this.mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
       this.audioChunks = [];
 
       this.mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          this.audioChunks.push(event.data);
-        }
+        if (event.data.size > 0) this.audioChunks.push(event.data);
       };
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-        console.log('🎤 Audio grabado:', audioBlob.size, 'bytes');
-
-        // Detener todos los tracks del stream
+        const type = this.mediaRecorder?.mimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type });
         stream.getTracks().forEach(track => track.stop());
 
-        // Enviar el audio
+        // Si VAD está activo y nunca hubo voz detectada, descartar el audio
+        if (this.VAD_ENABLED && !this.vadHadSpeech) {
+          console.log('🤫 VAD: no se detectó voz — audio descartado');
+          return;
+        }
+
+        console.log('🎤 Audio grabado:', audioBlob.size, 'bytes | codec:', type);
         this.sendAudioMessage(audioBlob);
       };
 
@@ -659,20 +755,119 @@ export class AgentChatComponent implements OnInit {
       this.isRecording.set(true);
       console.log('🔴 Grabación iniciada');
 
+      // VAD: conectar analyser al stream para detectar silencio
+      if (this.VAD_ENABLED) {
+        this.startVAD(stream, minRecordingMs);
+      }
+
     } catch (error) {
       console.error('❌ Error al acceder al micrófono:', error);
-      alert('No se pudo acceder al micrófono. Por favor, verifica los permisos.');
+      this.micPermission.set('denied');
+      alert(this.transloco.translate('agent.mic_permission_denied'));
     }
   }
 
   /**
-   * Detiene la grabación de audio
+   * Detiene la grabación de audio y limpia el VAD si estaba activo.
    */
   stopRecording(): void {
+    // Limpiar VAD antes de detener para evitar que el loop llame stopRecording de nuevo
+    this.stopVAD();
+
     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
       this.mediaRecorder.stop();
       this.isRecording.set(false);
       console.log('⏹️ Grabación detenida');
+    }
+  }
+
+  // ==================== VAD Methods (PROVISORIO) ====================
+
+  /**
+   * Arranca el loop de detección de silencio usando AnalyserNode.
+   * El AudioContext ya fue creado en toggleRecording() sincrónicamente (requerido por iOS).
+   */
+  private startVAD(stream: MediaStream, minRecordingMs: number = this.VAD_MIN_RECORDING_MS): void {
+    // Siempre destruir y recrear AudioContext para evitar contextos cerrados o stale
+    if (this.vadAudioContext) {
+      this.vadAudioContext.close().catch(() => {});
+    }
+    this.vadAudioContext = new AudioContext();
+
+    // Guardar minRecordingMs como propiedad para evitar bugs de closure entre sessions
+    this.vadCurrentMinRecordingMs = minRecordingMs;
+
+    const ctx = this.vadAudioContext;
+    const source = ctx.createMediaStreamSource(stream);
+
+    this.vadAnalyser = ctx.createAnalyser();
+    this.vadAnalyser.fftSize = 1024;
+    source.connect(this.vadAnalyser);
+
+    const dataArray = new Float32Array(this.vadAnalyser.fftSize);
+    this.vadSilenceStart = null;
+    this.vadHadSpeech = false;
+    this.vadRecordingStart = performance.now();
+
+    const loop = () => {
+      if (!this.vadAnalyser) return;
+
+      this.vadAnalyser.getFloatTimeDomainData(dataArray);
+
+      // Calcular dBFS (volumen pico en la ventana)
+      let maxAmplitude = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        const abs = Math.abs(dataArray[i]);
+        if (abs > maxAmplitude) maxAmplitude = abs;
+      }
+      const dBFS = maxAmplitude > 0 ? 20 * Math.log10(maxAmplitude) : -Infinity;
+      this.vadCurrentDb.set(isFinite(dBFS) ? Math.round(dBFS) : -999);
+
+      const now = performance.now();
+      const elapsedSinceStart = now - this.vadRecordingStart;
+
+      const isVoice = dBFS >= this.VAD_SILENCE_THRESHOLD;
+
+      // Trackear habla siempre, incluso durante el grace period
+      if (isVoice) this.vadHadSpeech = true;
+
+      // Auto-stop por silencio solo después del grace period
+      if (elapsedSinceStart >= this.vadCurrentMinRecordingMs) {
+        if (!isVoice) {
+          // Silencio detectado
+          if (this.vadSilenceStart === null) this.vadSilenceStart = now;
+          const silenceDuration = now - this.vadSilenceStart;
+          if (silenceDuration >= this.VAD_SILENCE_DURATION_MS) {
+            console.log(`🤫 VAD: silencio de ${silenceDuration.toFixed(0)}ms → auto-stop`);
+            this.stopRecording();
+            return;
+          }
+        } else {
+          // Hay voz → resetear contador de silencio
+          this.vadSilenceStart = null;
+        }
+      }
+
+      this.vadRafId = requestAnimationFrame(loop);
+    };
+
+    this.vadRafId = requestAnimationFrame(loop);
+  }
+
+  /**
+   * Detiene el loop VAD y cierra el AudioContext.
+   */
+  private stopVAD(): void {
+    if (this.vadRafId !== null) {
+      cancelAnimationFrame(this.vadRafId);
+      this.vadRafId = null;
+    }
+    this.vadAnalyser = null;
+    this.vadSilenceStart = null;
+    this.vadCurrentDb.set(-Infinity);
+    if (this.vadAudioContext) {
+      this.vadAudioContext.close();
+      this.vadAudioContext = null;
     }
   }
 
@@ -716,6 +911,8 @@ export class AgentChatComponent implements OnInit {
 
     this.loadingResponse = true;
     this.isStreaming.set(true);
+    // Activar auto-listen ANTES de que empiece el stream (evita race condition con onStreamComplete)
+    this.autoListenEnabled = true;
 
     // Crear placeholder para el mensaje del usuario (se llenará con la transcripción)
     const userMessageIndex = this.chatMessages.length;
@@ -784,6 +981,7 @@ export class AgentChatComponent implements OnInit {
       voiceParam,
       () => this.isStreaming.set(false) // onStreamComplete
     );
+    this.autoListenEnabled = true;
 
     setTimeout(() => {
       this.scrollToBottomFromArrow();
