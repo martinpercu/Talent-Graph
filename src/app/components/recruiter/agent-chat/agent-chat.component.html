@@ -153,8 +153,17 @@
               </textarea>
             </div>
 
-            <!-- Botón de micrófono STT (visible cuando no hay texto) -->
-            @if (!userMessage) {
+            <!-- Botón STOP (visible mientras hay stream activo) -->
+            @if (isStreaming()) {
+              <div role="button" aria-label="Detener respuesta" tabindex="0"
+                class="flex w-max h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
+                (click)="stopCurrentStream()">
+                <mat-icon class="text-white dark:text-neutral-800">stop</mat-icon>
+              </div>
+            }
+
+            <!-- Botón de micrófono STT (visible cuando no hay texto y no hay stream) -->
+            @if (!userMessage && !isStreaming()) {
               <div role="button" aria-label="Grabar audio" tabindex="0"
                 class="flex w-max h-9 p-1.5 rounded-full cursor-pointer transition-all duration-200"
                 [ngClass]="{
@@ -169,8 +178,8 @@
               </div>
             }
 
-            <!-- Botón de enviar mensaje (visible cuando hay texto) -->
-            @if (userMessage) {
+            <!-- Botón de enviar mensaje (visible cuando hay texto y no hay stream) -->
+            @if (userMessage && !isStreaming()) {
               <div role="button" aria-label="Enviar mensaje" tabindex="0"
                 class="flex w-max h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
                 (click)="sendMessage(userMessage)">
@@ -193,14 +202,14 @@
 
               <!-- Botón trigger -->
               <div
-                class="flex cursor-pointer h-9 items-center px-2 md:px-3 py-2 rounded-3xl border border-neutral-300 dark:border-neutral-600 transition-colors"
+                class="flex cursor-pointer h-9 items-center pl-3 pr-4 py-2 rounded-3xl border border-neutral-300 dark:border-neutral-600 transition-colors"
                 [class.bg-neutral-100]="showModesMenu()"
                 [class.dark:bg-neutral-600]="showModesMenu()"
                 [class.hover:bg-neutral-50]="!showModesMenu()"
                 [class.dark:hover:bg-neutral-500]="!showModesMenu()"
                 (click)="toggleModesMenu()">
                 <mat-icon>discover_tune</mat-icon>
-                <span class="hidden xs:block pl-2">Modes</span>
+                <span class="pl-2">Modes</span>
               </div>
 
               <!-- Dropdown menu -->
