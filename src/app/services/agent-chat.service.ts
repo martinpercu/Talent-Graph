@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '@env/environment';
@@ -31,7 +31,9 @@ export class AgentChatService {
 
   // Cola de audios para reproducción secuencial (ordenada por sequence)
   private audioQueue: { sequence: number; data: string; isBase64: boolean }[] = [];
-  private isPlayingAudio = false;
+  readonly isPlayingAudioSig = signal(false);
+  private get isPlayingAudio() { return this.isPlayingAudioSig(); }
+  private set isPlayingAudio(val: boolean) { this.isPlayingAudioSig.set(val); }
   private expectedSequence = 1;
   private streamEnded = false;
 
@@ -74,6 +76,9 @@ export class AgentChatService {
     // ⏱️ Timestamp para medir timing de eventos
     const streamStartTime = Date.now();
     const getElapsed = () => `[${Date.now() - streamStartTime}ms]`;
+
+    // Abortar stream anterior si aún estaba corriendo
+    this.currentAbortController?.abort();
 
     // Limpiar cola de audios anterior y resetear estado
     this.audioQueue = [];
@@ -418,6 +423,9 @@ export class AgentChatService {
     // ⏱️ Timestamp para medir timing de eventos
     const streamStartTime = Date.now();
     const getElapsed = () => `[${Date.now() - streamStartTime}ms]`;
+
+    // Abortar stream anterior si aún estaba corriendo
+    this.currentAbortController?.abort();
 
     // Limpiar cola de audios anterior y resetear estado
     this.audioQueue = [];

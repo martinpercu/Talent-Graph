@@ -162,19 +162,28 @@
               </div>
             }
 
+
+       <!-- class="flex w-max h-9 p-1.5 rounded-full cursor-pointer   pl-3 pr-4 py-2  transition-all duration-200" -->
+
             <!-- Botón de micrófono STT (visible cuando no hay texto y no hay stream) -->
             @if (!userMessage && !isStreaming()) {
               <div role="button" aria-label="Grabar audio" tabindex="0"
-                class="flex w-max h-9 p-1.5 rounded-full cursor-pointer transition-all duration-200"
+                class="flex cursor-pointer h-9 items-center p-1.5  rounded-3xl border-0 border-neutral-300 dark:border-neutral-600 transition-colors"
+
                 [ngClass]="{
-                  'bg-red-500 dark:bg-red-500 animate-pulse': isRecording(),
+                  'bg-green-500 dark:bg-green-500 animate-pulse': isRecording(),
                   'bg-neutral-200 dark:bg-neutral-600 hover:bg-neutral-300 dark:hover:bg-neutral-500': !isRecording()
                 }"
                 (click)="toggleRecording()">
                 <mat-icon [ngClass]="{
                   'text-white': isRecording(),
                   'text-neutral-600 dark:text-neutral-200': !isRecording()
-                }">{{ isRecording() ? 'stop' : 'mic' }}</mat-icon>
+                }">{{ isRecording() ? 'send' : 'mic' }}</mat-icon>
+                <!-- @if(!isRecording()) {
+                  <span class="pl-1 pr-2">Voice</span>
+                }@else {
+                  <span class="pl-1 pr-2">Stop</span>         
+                } -->
               </div>
             }
 
@@ -268,6 +277,15 @@
               }
 
             </div>
+            <div class="flex cursor-pointer h-9 items-center p-1.5 rounded-full border border-neutral-300 dark:border-neutral-600"
+              [class.border-cyan-500]="isPlayingAudio()"
+              (click)="toggleSpeak()">
+              @if(speakIsEnabled) {
+              <mat-icon [class.audio-playing-btn]="isPlayingAudio()">volume_up</mat-icon>
+              }@else {
+              <mat-icon class="">volume_off</mat-icon>
+              }
+            </div>
 
 
 
@@ -285,14 +303,14 @@
             </div>
 
 
-            <div class="flex h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
+            <!-- <div class="flex h-9 p-1.5 bg-neutral-800 dark:bg-white rounded-full cursor-pointer"
               (click)="toggleSpeak()">
               @if(speakIsEnabled) {
               <mat-icon class="text-white dark:text-neutral-800">spatial_audio_off</mat-icon>
               }@else {
               <mat-icon class="text-white dark:text-neutral-800">volume_off</mat-icon>
               }
-            </div>
+            </div> -->
 
 
 
