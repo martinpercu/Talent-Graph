@@ -105,7 +105,13 @@
     "chat_list": "Séances d'IA",
     "add_new_chat": "Nouvelle conversation",
     "rename": "Modifier nom",
-    "delete": "Effacer"
+    "delete": "Effacer",
+    "empty_response": "⚠️ Aucune réponse reçue. Veuillez réessayer.",
+    "error_response": "Erreur lors de la récupération de la réponse. Veuillez réessayer.",
+    "message_received_interrupted": "⚠️ Votre message a été reçu, mais la réponse a été interrompue. Veuillez poser à nouveau votre question.",
+    "error_send_message": "❌ Échec de l'envoi du message. Veuillez réessayer.",
+    "error_connection": "❌ Erreur de connexion. Vérifiez votre connexion Internet et réessayez.",
+    "error_send_audio": "❌ Échec de l'envoi de l'audio. Veuillez réessayer."
   },
   "recruiter_auth": {
     "login": "Se connecter",

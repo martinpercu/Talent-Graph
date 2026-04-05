@@ -105,7 +105,13 @@
     "chat_list": "Session List",
     "add_new_chat": "New Chat",
     "rename": "Rename",
-    "delete": "Delete"
+    "delete": "Delete",
+    "empty_response": "⚠️ No response received. Please try again.",
+    "error_response": "Error getting response. Please try again.",
+    "message_received_interrupted": "⚠️ Your message was received, but the response was interrupted. Please ask again.",
+    "error_send_message": "❌ Failed to send the message. Please try again.",
+    "error_connection": "❌ Connection error. Check your internet and try again.",
+    "error_send_audio": "❌ Failed to send the audio. Please try again."
   },
   "recruiter_auth": {
     "login" : "Log in",

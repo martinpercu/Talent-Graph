@@ -6,6 +6,7 @@ import { ChatMessage, ThreadHistoryResponse } from '@models/chatMessage';
 import { AuthService } from '@services/auth.service';
 import { RecruiterService } from '@services/recruiter.service';
 import { AgentChatListService } from '@services/agent-chat-list.service';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +17,7 @@ export class AgentChatService {
   private authService = inject(AuthService);
   private recruiterService = inject(RecruiterService);
   private agentChatListService = inject(AgentChatListService);
+  private transloco = inject(TranslocoService);
 
   constructor() {
     const recruiter = this.recruiterService.recruiterSig()
@@ -137,7 +139,7 @@ export class AgentChatService {
             } else {
               // Stream cerró sin contenido - asegurarse de quitar el loading para no quedar colgado
               console.warn("⚠️ Stream cerró sin contenido - forzando fin de loading");
-              chatMessages[responseIndex].message = "⚠️ No se recibió respuesta. Por favor, intenta de nuevo.";
+              chatMessages[responseIndex].message = this.transloco.translate('agent.empty_response');
               onLoadingChange(false);
               onError("Empty response from server");
               onStreamComplete?.();
@@ -221,8 +223,8 @@ export class AgentChatService {
                   return; // No procesar más chunks
                 } else if (data.type === 'error') {
                   console.error('❌ Error del servidor:', data.message);
-                  chatMessages[responseIndex].message = "Error getting response. Please try again.";
-                  onError("Error getting response. Please try again.");
+                  chatMessages[responseIndex].message = this.transloco.translate('agent.error_response');
+                  onError(this.transloco.translate('agent.error_response'));
                   onLoadingChange(false);
                 }
               } catch (e) {
@@ -240,8 +242,8 @@ export class AgentChatService {
             return;
           }
           console.error('❌ Error en stream:', error);
-          chatMessages[responseIndex].message = "Error getting response. Please try again.";
-          onError("Error getting response. Please try again.");
+          chatMessages[responseIndex].message = this.transloco.translate('agent.error_response');
+          onError(this.transloco.translate('agent.error_response'));
           onLoadingChange(false);
         });
       };
@@ -275,19 +277,16 @@ export class AgentChatService {
         if (lastMessage?.role === 'user' && lastMessage?.message === message) {
           // ✅ El mensaje SÍ se guardó, solo falló la respuesta del agente
           console.log('✅ Mensaje guardado en backend - solo falló la respuesta del agente');
-          chatMessages[responseIndex].message =
-            "⚠️ Tu mensaje fue recibido, pero la respuesta se interrumpió. Por favor, pregunta de nuevo.";
+          chatMessages[responseIndex].message = this.transloco.translate('agent.message_received_interrupted');
         } else {
           // ❌ El mensaje NO se guardó
           console.log('❌ Mensaje NO guardado en backend');
-          chatMessages[responseIndex].message =
-            "❌ Error al enviar el mensaje. Por favor, intenta de nuevo.";
+          chatMessages[responseIndex].message = this.transloco.translate('agent.error_send_message');
         }
       } catch (verifyError) {
         // No pudimos verificar (backend completamente caído)
         console.error('❌ No se pudo verificar el estado del mensaje:', verifyError);
-        chatMessages[responseIndex].message =
-          "❌ Error de conexión. Verifica tu internet e intenta de nuevo.";
+        chatMessages[responseIndex].message = this.transloco.translate('agent.error_connection');
       }
 
       onError("Error in stream");
@@ -342,7 +341,7 @@ export class AgentChatService {
           const index = chatMessages.length - 1;
           chatMessages[index] = {
             role: "assistant",
-            message: "Error getting response. Please try again."
+            message: this.transloco.translate('agent.error_response')
           };
           onLoadingChange(false);
         }
@@ -552,8 +551,8 @@ export class AgentChatService {
                   return;
                 } else if (data.type === 'error') {
                   console.error('❌ Error del servidor:', data.message);
-                  chatMessages[responseIndex].message = "Error getting response. Please try again.";
-                  onError("Error getting response. Please try again.");
+                  chatMessages[responseIndex].message = this.transloco.translate('agent.error_response');
+                  onError(this.transloco.translate('agent.error_response'));
                   onLoadingChange(false);
                 }
               } catch (e) {
@@ -571,8 +570,8 @@ export class AgentChatService {
             return;
           }
           console.error('❌ Error en audio stream:', error);
-          chatMessages[responseIndex].message = "Error getting response. Please try again.";
-          onError("Error getting response. Please try again.");
+          chatMessages[responseIndex].message = this.transloco.translate('agent.error_response');
+          onError(this.transloco.translate('agent.error_response'));
           onLoadingChange(false);
         });
       };
@@ -587,7 +586,7 @@ export class AgentChatService {
         return;
       }
       console.error('❌ Error en fetch de audio:', error);
-      chatMessages[responseIndex].message = "❌ Error al enviar el audio. Por favor, intenta de nuevo.";
+      chatMessages[responseIndex].message = this.transloco.translate('agent.error_send_audio');
       onError("Error sending audio");
       onLoadingChange(false);
       onStreamComplete?.();
