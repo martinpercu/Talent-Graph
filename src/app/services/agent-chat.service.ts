@@ -36,6 +36,7 @@ export class AgentChatService {
   readonly isPlayingAudioSig = signal(false);
   private get isPlayingAudio() { return this.isPlayingAudioSig(); }
   private set isPlayingAudio(val: boolean) { this.isPlayingAudioSig.set(val); }
+  readonly hadAudioThisStream = signal(false);
   private expectedSequence = 1;
   private streamEnded = false;
 
@@ -85,6 +86,7 @@ export class AgentChatService {
     // Limpiar cola de audios anterior y resetear estado
     this.audioQueue = [];
     this.isPlayingAudio = false;
+    this.hadAudioThisStream.set(false);
     this.expectedSequence = 1;
     this.streamEnded = false;
     this.nextAudioStartTime = 0;
@@ -429,6 +431,7 @@ export class AgentChatService {
     // Limpiar cola de audios anterior y resetear estado
     this.audioQueue = [];
     this.isPlayingAudio = false;
+    this.hadAudioThisStream.set(false);
     this.expectedSequence = 1;
     this.streamEnded = false;
     this.nextAudioStartTime = 0;
@@ -673,6 +676,7 @@ export class AgentChatService {
    */
   private enqueueAudio(sequence: number, data: string, isBase64: boolean = false): void {
     console.log(`📥 Encolando audio #${sequence} (${isBase64 ? 'base64' : 'url'})`);
+    this.hadAudioThisStream.set(true);
     this.audioQueue.push({ sequence, data, isBase64 });
 
     // Si es la secuencia esperada y no estamos reproduciendo, empezar!

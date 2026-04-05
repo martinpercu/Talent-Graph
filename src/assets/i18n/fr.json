@@ -111,7 +111,8 @@
     "message_received_interrupted": "⚠️ Votre message a été reçu, mais la réponse a été interrompue. Veuillez poser à nouveau votre question.",
     "error_send_message": "❌ Échec de l'envoi du message. Veuillez réessayer.",
     "error_connection": "❌ Erreur de connexion. Vérifiez votre connexion Internet et réessayez.",
-    "error_send_audio": "❌ Échec de l'envoi de l'audio. Veuillez réessayer."
+    "error_send_audio": "❌ Échec de l'envoi de l'audio. Veuillez réessayer.",
+    "mic_permission_denied": "L'accès au microphone est bloqué. Activez-le dans les paramètres de votre appareil pour utiliser la saisie vocale."
   },
   "recruiter_auth": {
     "login": "Se connecter",

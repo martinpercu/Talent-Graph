@@ -111,7 +111,9 @@
     "message_received_interrupted": "⚠️ Your message was received, but the response was interrupted. Please ask again.",
     "error_send_message": "❌ Failed to send the message. Please try again.",
     "error_connection": "❌ Connection error. Check your internet and try again.",
-    "error_send_audio": "❌ Failed to send the audio. Please try again."
+    "error_send_audio": "❌ Failed to send the audio. Please try again.",
+    "mic_permission_denied": "Microphone access is blocked. Please enable it in your device settings to use voice input."
+
   },
   "recruiter_auth": {
     "login" : "Log in",
