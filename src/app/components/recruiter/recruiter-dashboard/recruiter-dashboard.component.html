@@ -123,7 +123,7 @@
     <span>{{ "recruiter.manager" | transloco }}</span>
   </button>
   }
-  @if(theRecruiter.subscriptionLevel >= 4){
+  @if(theRecruiter.subscriptionLevel >= 4 && platformName !== 'Central-ATS'){
   @if(recruiterService.recruiterSig()?.useAgentsAI){
   <button
     (click)="setView('agent_chat')"
@@ -283,7 +283,7 @@
     </button>
     }
 
-    @if (theRecruiter.subscriptionLevel >= 4){
+    @if (theRecruiter.subscriptionLevel >= 4 && platformName !== 'Central-ATS'){
     @if(recruiterService.recruiterSig()?.useAgentsAI){
     <button
       (click)="setView('agent_chat')"

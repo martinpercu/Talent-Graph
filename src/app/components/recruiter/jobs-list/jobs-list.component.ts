@@ -49,6 +49,8 @@ export class JobsListComponent {
 
   selectedResume: Resume | null = null; // Esta variable guardará el currículum a mostrar
 
+  platformName: string = environment.WEBSITE_NAME;
+
 
   constructor(private translocoService: TranslocoService){}
 

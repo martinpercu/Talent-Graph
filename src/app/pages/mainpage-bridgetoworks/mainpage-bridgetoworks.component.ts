@@ -21,16 +21,19 @@ export class MainpageBridgetoworksComponent {
   appName: string = environment.WEBSITE_NAME;
 
   // For DEMO
-  demoApp: boolean = false
+  demoApp: boolean = false  
+  centralApp: boolean = false
+
   recruiterAuthService = inject(RecruiterAuthService);
   errorMessage: string | null = null;
 
   ngOnInit() {
-    console.log(this.demoApp);
     if(this.appName == "TalentGraph"){
       this.demoApp = true
     }
-    console.log(this.demoApp);    
+    if(this.appName == "Central-ATS"){
+      this.centralApp = true
+    }
 
     // onSubmit(): void {
     //   const rawForm = this.form.getRawValue();
