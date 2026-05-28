@@ -99,7 +99,9 @@ export class RecruiterDashboardComponent {
   visualStatesService = inject(VisualStatesService);
 
 
-  // exams: Exam[] = [];
+
+  appName: string = environment.WEBSITE_NAME;
+  centralApp: boolean = false  // exams: Exam[] = [];
 
   candidates: Candidate[] = [];
   results: Result[] = [];
@@ -134,6 +136,12 @@ export class RecruiterDashboardComponent {
 
 
   async ngOnInit() {
+    console.log(this.centralApp);
+    if(this.appName == "Central-ATS"){
+      this.centralApp = true
+    }
+    console.log(this.centralApp);
+
     this.authService.user$
       .pipe(
         // 1. Aseguramos que el usuario esté autenticado
@@ -250,15 +258,22 @@ export class RecruiterDashboardComponent {
           // Llama a la función para ordenar los trabajos una vez que los datos estén cargados
           this.orderJobsByCandidateCount();
 
-          if(this.jobs.length == 0){
-            this.setView('jobs_edit')
+          if(!this.centralApp){
+            if(this.jobs.length == 0){
+              this.setView('jobs_edit')
+            }
+            if(this.jobs.length >= 1){
+              this.setView('jobs')
+            }
+            if(this.jobs.length >= 1){
+              this.setView('agent_chat')
+            }
           }
-          if(this.jobs.length >= 1){
+          if(this.centralApp){
             this.setView('jobs')
           }
-          if(this.jobs.length >= 1){
-            this.setView('agent_chat')
-          }
+
+
 
         },
         error: (error) => {

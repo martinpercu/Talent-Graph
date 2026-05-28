@@ -40,6 +40,13 @@
           You are logged into a live demo environment with synthetic data to test our LangGraph integration
         </div>
       </div>
+      }
+      @if(centralApp) {
+      <div class="pb-6 w-3/5">
+        <div class="pb-4">
+          You are logged into a live demo environment with synthetic data to test our HR integration
+        </div>
+      </div>
       }@else {
       <div class="pb-6 w-2/3">
         <div class="pb-4">
@@ -54,7 +61,7 @@
 
       <div class="flex flex-row gap-2 sm:gap-8 py-2 sm:pt-2 pt-0 sm:pb-8 pb-4 mx-2">
 
-        @if(demoApp) {
+        @if(demoApp || centralApp) {
         <div (click)="goToDemoRecruiter()"
           class="flex items-center p-3 gap-2 text-sm font-semibold bg-neutral-150 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 rounded-lg cursor-pointer border shadow-md">
           <mat-icon class="">rocket_launch</mat-icon>
